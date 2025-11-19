@@ -99,6 +99,7 @@
       text-align: center;
     }
 
+    /* Basis-Styling für Inputs */
     input[type="time"],
     input[type="number"],
     input[type="text"] {
@@ -110,8 +111,13 @@
       color: var(--text);
       font-size: 0.9rem;
       outline: none;
-      height: 36px;
       display: block;
+    }
+
+    /* Feste Höhe nur für Number/Text, nicht für native Time-Control */
+    input[type="number"],
+    input[type="text"] {
+      height: 36px;
     }
 
     input[type="time"]:focus,
@@ -157,6 +163,7 @@
       margin-top: 8px;
       gap: 10px;
       justify-content: space-between;
+      flex-wrap: wrap;
     }
 
     .inline-input {
@@ -419,7 +426,7 @@
       opacity: 0;
       transition: opacity 0.2s ease;
       z-index: 999;
-      background: radial-gradient(circle at center, rgba(0, 0, 0, 0.35), transparent 55%);
+      background: radial-gradient(circle at center, rgba(0, 0, 0, 0.4), transparent 55%);
     }
 
     .toast-overlay.visible {
@@ -429,25 +436,26 @@
 
     .toast-bubble {
       background: rgba(15, 15, 15, 0.96);
-      padding: 10px 16px;
+      padding: 14px 22px;
       border-radius: 999px;
       box-shadow: var(--shadow-soft);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      font-size: 0.85rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.9rem;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      max-width: 90%;
     }
 
     .toast-icon {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       border-radius: 999px;
       border: 1px solid var(--accent);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       color: var(--accent);
     }
 
@@ -507,7 +515,7 @@
         </label>
       </div>
 
-      <!-- Sauna Inline-Dauer -->
+      <!-- Sauna Inline-Dauer + Anzahl -->
       <div class="sauna-inline-row" id="saunaInlineRow">
         <div class="flex-1">
           <label for="saunaDurationInline" class="center-label">Sauna (min)</label>
@@ -516,6 +524,10 @@
         <div class="flex-1">
           <label for="relaxDurationInline" class="center-label">Relax (min)</label>
           <input type="number" id="relaxDurationInline" min="0" inputmode="numeric" class="inline-input">
+        </div>
+        <div class="flex-1">
+          <label for="saunaCountInline" class="center-label">Gänge</label>
+          <input type="number" id="saunaCountInline" min="1" inputmode="numeric" class="inline-input">
         </div>
       </div>
 
@@ -652,6 +664,7 @@
       saunaInlineRow: document.getElementById("saunaInlineRow"),
       saunaDurationInline: document.getElementById("saunaDurationInline"),
       relaxDurationInline: document.getElementById("relaxDurationInline"),
+      saunaCountInline: document.getElementById("saunaCountInline"),
       ratioRow: document.getElementById("ratioRow"),
       ratioSlider: document.getElementById("ratioSlider"),
       ratioInfo: document.getElementById("ratioInfo"),
@@ -677,6 +690,7 @@
     const toastOverlay = document.getElementById("toastOverlay");
     const toastMessage = document.getElementById("toastMessage");
     let toastDismissCallback = null;
+    let toastTimeout = null;
 
     let currentSettings = { ...defaultSettings };
     let lastPlan = null;
@@ -779,19 +793,34 @@
       els.mainMessage.className = "message " + (type || "");
     }
 
-    function showToast(message, onDismiss) {
+    function showToast(message, onDone) {
       toastMessage.textContent = message;
-      toastDismissCallback = typeof onDismiss === "function" ? onDismiss : null;
+      toastDismissCallback = typeof onDone === "function" ? onDone : null;
+      if (toastTimeout) {
+        clearTimeout(toastTimeout);
+        toastTimeout = null;
+      }
       toastOverlay.classList.add("visible");
+      toastTimeout = setTimeout(() => {
+        hideToast();
+      }, 2000);
     }
 
-    toastOverlay.addEventListener("click", function () {
+    function hideToast() {
       toastOverlay.classList.remove("visible");
+      if (toastTimeout) {
+        clearTimeout(toastTimeout);
+        toastTimeout = null;
+      }
       if (toastDismissCallback) {
         const cb = toastDismissCallback;
         toastDismissCallback = null;
         cb();
       }
+    }
+
+    toastOverlay.addEventListener("click", function () {
+      hideToast();
     });
 
     function calculatePlan() {
@@ -820,19 +849,21 @@
 
       let saunaDurationEffective = s.saunaDuration;
       let relaxDurationEffective = s.relaxDuration;
+      let saunaCount = 1;
 
       if (sauna) {
         saunaDurationEffective = toInt(els.saunaDurationInline.value, s.saunaDuration);
         relaxDurationEffective = toInt(els.relaxDurationInline.value, s.relaxDuration);
+        saunaCount = toInt(els.saunaCountInline.value, 1);
+        if (saunaCount < 1) saunaCount = 1;
       }
 
       let fixAfter;
       if (sauna) {
+        const perSession = saunaDurationEffective + s.postSaunaShower + relaxDurationEffective;
         fixAfter =
           s.preSaunaShower +
-          saunaDurationEffective +
-          s.postSaunaShower +
-          relaxDurationEffective +
+          saunaCount * perSession +
           s.showerAfter +
           s.changeAfter +
           s.driveBack;
@@ -855,7 +886,7 @@
       const sliderMax = Math.max(5, Math.floor(trainingTime / 5) * 5);
       els.ratioSlider.max = sliderMax;
       let sliderValue = parseInt(els.ratioSlider.value, 10);
-      if (!Number.isFinite(sliderValue) || sliderValue <= 0 || sliderValue > sliderMax) {
+      if (!Number.isFinite(sliderValue) || sliderValue < 0 || sliderValue > sliderMax) {
         sliderValue = Math.floor(sliderMax / 2 / 5) * 5;
         els.ratioSlider.value = sliderValue;
       }
@@ -869,7 +900,8 @@
         settings: {
           ...s,
           saunaDurationEffective,
-          relaxDurationEffective
+          relaxDurationEffective,
+          saunaCount
         }
       };
 
@@ -891,10 +923,24 @@
 
       let cardioMinutes = cardio ? trainingTime - strengthMinutes : 0;
 
+      // Fälle:
+      // - Cardio deaktiviert -> nur Kraft
+      // - Kraft-Minuten <= 0 -> nur Cardio
       if (!cardio) {
         strengthMinutes = trainingTime;
         cardioMinutes = 0;
         els.ratioSlider.disabled = true;
+        els.ratioInfo.innerHTML =
+          "Nur Kraft: <span class=\"accent-text\">" + trainingTime + " min</span>";
+      } else if (strengthMinutes <= 0) {
+        strengthMinutes = 0;
+        cardioMinutes = trainingTime;
+        els.ratioSlider.disabled = false;
+        els.ratioInfo.innerHTML =
+          "Nur Cardio: <span class=\"accent-text\">" + trainingTime + " min</span>";
+      } else if (cardioMinutes <= 0) {
+        cardioMinutes = 0;
+        els.ratioSlider.disabled = false;
         els.ratioInfo.innerHTML =
           "Nur Kraft: <span class=\"accent-text\">" + trainingTime + " min</span>";
       } else {
@@ -907,66 +953,90 @@
       let t = start;
       const steps = [];
 
-      function add(label, catKey, groupKey) {
+      function add(label, groupKey) {
         steps.push({
           time: formatMinutesToTime(t),
           label: label,
-          cat: catKey || null,
           group: groupKey || null
         });
       }
 
       // Abfahrt & Ankunft (Gruppe: Hinfahrt)
-      add("Abfahrt", "drive", "drive-out");
+      add("Abfahrt", "drive-out");
       t += s.driveTo;
 
-      add("Ankunft im Gym", "drive", "drive-out");
+      add("Ankunft im Gym", "drive-out");
       t += s.changeBefore;
 
-      // Kraft (Gruppe: Kraft)
-      add("Beginn Kraft-Training", "strength", "strength");
-      t += strengthMinutes;
-      add("Ende Kraft-Training", "strength", "strength");
+      // Kraft (Gruppe: Kraft) – nur wenn > 0
+      if (strengthMinutes > 0) {
+        add("Beginn Kraft-Training", "strength");
+        t += strengthMinutes;
+        add("Ende Kraft-Training", "strength");
+      }
 
-      // Cardio (Gruppe: Cardio)
-      if (cardio && cardioMinutes > 0) {
-        add("Beginn Cardio-Training", "cardio", "cardio");
+      // Cardio (Gruppe: Cardio) – nur wenn > 0
+      if (cardioMinutes > 0) {
+        add("Beginn Cardio-Training", "cardio");
         t += cardioMinutes;
-        add("Ende Cardio-Training", "cardio", "cardio");
+        add("Ende Cardio-Training", "cardio");
       }
 
       // Sauna-Block
-      if (sauna) {
-        // Abduschen vor Sauna + Saunagang als Gruppe
-        add("Abduschen vor Sauna", "shower", "sauna-session");
+      if (sauna && s.saunaCount > 0) {
+        const count = s.saunaCount;
+
+        // Abduschen vor Sauna + Saunagang 1
+        add("Abduschen vor Sauna", "sauna-1");
         t += s.preSaunaShower;
 
-        add("Beginn Saunagang", "sauna", "sauna-session");
+        add("Beginn Saunagang 1", "sauna-1");
         t += s.saunaDurationEffective;
-        add("Ende Saunagang", "sauna", "sauna-session");
+        add("Ende Saunagang 1", "sauna-1");
 
-        // Abduschen nach Sauna + Relax als eigene Gruppe
-        add("Abduschen nach Sauna", "shower", "sauna-relax");
+        // Relax 1
+        add("Abduschen nach Saunagang 1", "sauna-relax-1");
         t += s.postSaunaShower;
 
-        add("Beginn Relax im Ruheraum", "relax", "sauna-relax");
+        add("Beginn Relax 1", "sauna-relax-1");
         t += s.relaxDurationEffective;
-        add("Ende Relax", "relax", "sauna-relax");
+        add("Ende Relax 1", "sauna-relax-1");
+
+        // Weitere Gänge (2..n)
+        for (let i = 2; i <= count; i++) {
+          const gSauna = "sauna-session-" + i;
+          const gRelax = "sauna-relax-" + i;
+
+          add("Beginn Saunagang " + i, gSauna);
+          t += s.saunaDurationEffective;
+          add("Ende Saunagang " + i, gSauna);
+
+          add("Abduschen nach Saunagang " + i, gRelax);
+          t += s.postSaunaShower;
+
+          add("Beginn Relax " + i, gRelax);
+          t += s.relaxDurationEffective;
+          add("Ende Relax " + i, gRelax);
+        }
       }
 
       // Abschluss
       // Gruppe: Duschen + Umziehen nach Training
-      add("Duschen nach Training", "shower", "finish-clean");
+      add("Duschen nach Training", "finish-clean");
       t += s.showerAfter;
 
-      add("Anziehen nach Training", "change", "finish-clean");
+      add("Anziehen nach Training", "finish-clean");
       t += s.changeAfter;
 
       // Gruppe: Heimfahrt + Zuhause
-      add("Abfahrt nach Hause", "drive", "finish-home");
+      add("Abfahrt nach Hause", "finish-home");
       t += s.driveBack;
 
-      add("Zuhause", "home", "finish-home");
+      add("Zuhause", "finish-home");
+
+      const saunaSummary = lastPlan.sauna
+        ? "Ja (" + lastPlan.settings.saunaCount + " Gang" + (lastPlan.settings.saunaCount > 1 ? "e" : "") + ")"
+        : "Nein";
 
       const summaryHtml =
         '<div class="summary-row">' +
@@ -979,7 +1049,7 @@
         '</div>' +
         '<div class="summary-row">' +
           '<span>Sauna eingeplant:</span>' +
-          '<span class="summary-highlight">' + (sauna ? "Ja" : "Nein") + '</span>' +
+          '<span class="summary-highlight">' + saunaSummary + '</span>' +
         '</div>';
 
       let html = '<div class="output-card">' + summaryHtml + '<ul class="timeline">';
@@ -1023,6 +1093,7 @@
         els.saunaInlineRow.style.display = "flex";
         els.saunaDurationInline.value = currentSettings.saunaDuration;
         els.relaxDurationInline.value = currentSettings.relaxDuration;
+        els.saunaCountInline.value = 1;
       } else {
         els.saunaInlineRow.style.display = "none";
       }
@@ -1031,25 +1102,18 @@
       }
     });
 
-    // Sauna/Relax Inline: Inhalt beim Antippen komplett markieren
-    [els.saunaDurationInline, els.relaxDurationInline].forEach(function (input) {
+    // Sauna/Relax/Count Inline: Inhalt beim Antippen komplett markieren
+    [els.saunaDurationInline, els.relaxDurationInline, els.saunaCountInline].forEach(function (input) {
       input.addEventListener("focus", function () {
         setTimeout(() => {
           input.select();
         }, 10);
       });
-    });
-
-    els.saunaDurationInline.addEventListener("input", function () {
-      if (lastPlan) {
-        calculatePlan();
-      }
-    });
-
-    els.relaxDurationInline.addEventListener("input", function () {
-      if (lastPlan) {
-        calculatePlan();
-      }
+      input.addEventListener("input", function () {
+        if (lastPlan) {
+          calculatePlan();
+        }
+      });
     });
 
     els.settingsToggle.addEventListener("click", function () {
