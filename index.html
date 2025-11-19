@@ -547,7 +547,7 @@
       </div>
 
       <!-- Cardio-Block -->
-      <div class="toggle-block">
+      <div class="toggle-block" id="cardioBlock">
         <label class="checkbox">
           <input type="checkbox" id="cardioEnabled" checked>
           <span>Cardio einplanen</span>
@@ -564,7 +564,7 @@
       </div>
 
       <!-- Sauna-Block -->
-      <div class="toggle-block">
+      <div class="toggle-block" id="saunaBlock">
         <label class="checkbox">
           <input type="checkbox" id="saunaEnabled">
           <span>Sauna einplanen</span>
@@ -585,6 +585,14 @@
           <label for="saunaCountInline" class="center-label">Gänge</label>
           <input type="number" id="saunaCountInline" min="1" inputmode="numeric" class="inline-input">
         </div>
+      </div>
+
+      <!-- Sauna Only -->
+      <div class="toggle-block" id="saunaOnlyBlock" style="display:none;">
+        <label class="checkbox">
+          <input type="checkbox" id="saunaOnly">
+          <span>Sauna only</span>
+        </label>
       </div>
 
       <div class="sauna-sessions" id="saunaSessionsContainer"></div>
@@ -719,7 +727,10 @@
       endTime: document.getElementById("endTime"),
       cardioEnabled: document.getElementById("cardioEnabled"),
       saunaEnabled: document.getElementById("saunaEnabled"),
+      saunaOnly: document.getElementById("saunaOnly"),
+      cardioBlock: document.getElementById("cardioBlock"),
       saunaInlineRow: document.getElementById("saunaInlineRow"),
+      saunaOnlyBlock: document.getElementById("saunaOnlyBlock"),
       saunaDurationInline: document.getElementById("saunaDurationInline"),
       relaxDurationInline: document.getElementById("relaxDurationInline"),
       saunaCountInline: document.getElementById("saunaCountInline"),
@@ -949,6 +960,7 @@
       const s = currentSettings;
       const cardio = els.cardioEnabled.checked;
       const sauna = els.saunaEnabled.checked;
+      const saunaOnly = sauna && els.saunaOnly.checked;
 
       const fixBefore = s.driveTo + s.changeBefore;
 
@@ -984,6 +996,59 @@
         }
       }
 
+      // SAUNA-ONLY MODUS
+      if (saunaOnly) {
+        const fixAfter = s.showerAfter + s.changeAfter + s.driveBack;
+        const saunaBudget = total - (fixBefore + fixAfter);
+
+        if (saunaBudget <= 0) {
+          showMainMessage(
+            "Dein Zeitfenster ist zu knapp für einen Sauna only Besuch.",
+            "error"
+          );
+          els.planOutput.innerHTML =
+            '<div class="message error">Zeitfenster zu kurz für Sauna only.</div>';
+          return;
+        }
+
+        // gesamte Sauna-Zeit inkl. Duschen vor/nach Gängen
+        let saunaTotalWithShowers = s.preSaunaShower;
+        for (let i = 0; i < saunaCount; i++) {
+          saunaTotalWithShowers += saunaDurations[i] + s.postSaunaShower + relaxDurations[i];
+        }
+
+        if (saunaTotalWithShowers > saunaBudget) {
+          showMainMessage(
+            "Mit den aktuellen Sauna-Einstellungen passt du nicht in dein Zeitfenster.",
+            "error"
+          );
+          els.planOutput.innerHTML =
+            '<div class="message error">Reduziere Dauer oder Anzahl der Saunagänge.</div>';
+          return;
+        }
+
+        lastPlan = {
+          saunaOnly: true,
+          start,
+          end,
+          saunaBudget,
+          sauna,
+          cardio: false,
+          settings: {
+            ...s,
+            saunaDurationEffective,
+            relaxDurationEffective,
+            saunaCount,
+            saunaDurations,
+            relaxDurations
+          }
+        };
+
+        renderPlan();
+        return;
+      }
+
+      // NORMALER TRAININGS-MODUS (Training + ggf. Sauna)
       let fixAfter;
       if (sauna) {
         let saunaRelaxSum = 0;
@@ -1022,6 +1087,7 @@
       }
 
       lastPlan = {
+        saunaOnly: false,
         start,
         end,
         trainingBudget,
@@ -1043,6 +1109,131 @@
     function renderPlan() {
       if (!lastPlan) return;
 
+      if (lastPlan.saunaOnly) {
+        renderSaunaOnlyPlan();
+      } else {
+        renderTrainingSaunaPlan();
+      }
+    }
+
+    function renderSaunaOnlyPlan() {
+      const { start, saunaBudget, settings: s } = lastPlan;
+
+      let t = start;
+      const steps = [];
+
+      function addHeader(label) {
+        steps.push({ header: true, label });
+      }
+
+      function add(label, groupKey) {
+        steps.push({
+          time: formatMinutesToTime(t),
+          label,
+          group: groupKey || null
+        });
+      }
+
+      // Hinfahrt + Umziehen
+      add("Abfahrt", "drive-out");
+      t += s.driveTo;
+
+      add("Ankunft im Gym", "drive-out");
+      t += s.changeBefore;
+
+      // Sauna
+      addHeader("Sauna");
+
+      const count = s.saunaCount;
+      const one = count === 1;
+
+      // Abduschen vor Sauna
+      add("Abduschen vor Sauna", "sauna-pre");
+      t += s.preSaunaShower;
+
+      // Gänge
+      for (let i = 1; i <= count; i++) {
+        const idx = i - 1;
+        const gSauna = "sauna-session-" + i;
+        const gRelax = "sauna-relax-" + i;
+
+        const saunaLabelStart = one ? "Beginn Saunagang" : "Beginn Saunagang " + i;
+        const saunaLabelEnd = one ? "Ende Saunagang" : "Ende Saunagang " + i;
+        const relaxLabelStart = one ? "Beginn Relax" : "Beginn Relax " + i;
+        const relaxLabelEnd = one ? "Ende Relax" : "Ende Relax " + i;
+        const afterLabel = one ? "Abduschen nach Saunagang" : "Abduschen nach Saunagang " + i;
+
+        add(saunaLabelStart, gSauna);
+        t += s.saunaDurations[idx] ?? s.saunaDurationEffective;
+        add(saunaLabelEnd, gSauna);
+
+        add(afterLabel, gRelax);
+        t += s.postSaunaShower;
+
+        add(relaxLabelStart, gRelax);
+        t += s.relaxDurations[idx] ?? s.relaxDurationEffective;
+        add(relaxLabelEnd, gRelax);
+      }
+
+      // Abschluss
+      addHeader("Abschluss");
+
+      add("Duschen nach Training", "finish-clean");
+      t += s.showerAfter;
+
+      add("Anziehen nach Training", "finish-clean");
+      t += s.changeAfter;
+
+      add("Abfahrt nach Hause", "finish-home");
+      t += s.driveBack;
+
+      add("Zuhause", "finish-home");
+
+      // Sauna-Gesamtzeit (Sauna + Relax, ohne Duschen)
+      let saunaTotal = 0;
+      for (let i = 0; i < s.saunaCount; i++) {
+        saunaTotal += (s.saunaDurations[i] ?? s.saunaDurationEffective) +
+                      (s.relaxDurations[i] ?? s.relaxDurationEffective);
+      }
+      const saunaCountLabel = s.saunaCount === 1 ? "1 Gang" : s.saunaCount + " Gänge";
+
+      const summaryHtml =
+        '<div class="summary-row">' +
+          '<span>Sauna-Zeit gesamt:</span>' +
+          '<span class="summary-highlight">' + saunaTotal + ' min</span>' +
+        '</div>' +
+        '<div class="summary-row">' +
+          '<span>Saunagänge:</span>' +
+          '<span class="summary-highlight">' + saunaCountLabel + '</span>' +
+        '</div>';
+
+      let html = '<div class="output-card">' + summaryHtml + '<ul class="timeline">';
+
+      let prevGroup = null;
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+
+        if (step.header) {
+          html += '<li class="timeline-header">' + step.label + '</li>';
+          continue;
+        }
+
+        const isGroupStart = step.group && step.group !== prevGroup;
+        const groupClass = isGroupStart ? " group-start" : "";
+        prevGroup = step.group || prevGroup;
+
+        html +=
+          '<li class="timeline-item' + groupClass + '">' +
+            '<span class="time">' + step.time + '</span>' +
+            '<span class="label">' + step.label + '</span>' +
+          '</li>';
+      }
+      html += "</ul></div>";
+
+      els.planOutput.innerHTML = html;
+    }
+
+    function renderTrainingSaunaPlan() {
       const { start, trainingBudget, cardio, sauna, settings: s } = lastPlan;
 
       let strengthRaw = parseInt(els.ratioSlider.value, 10);
@@ -1053,7 +1244,6 @@
       let trainingTimeSegments;
 
       if (!cardio) {
-        // nur Kraft
         breakBetween = 0;
         strengthMinutes = trainingBudget;
         cardioMinutes = 0;
@@ -1062,11 +1252,9 @@
         els.ratioInfo.innerHTML =
           "Nur Kraft: <span class=\"accent-text\">" + trainingTimeSegments + " min</span>";
       } else {
-        // Cardio an
         let cardioRaw = trainingBudget - strengthRaw;
 
         if (strengthRaw <= 0) {
-          // nur Cardio
           breakBetween = 0;
           strengthMinutes = 0;
           cardioMinutes = trainingBudget;
@@ -1075,7 +1263,6 @@
           els.ratioInfo.innerHTML =
             "Nur Cardio: <span class=\"accent-text\">" + trainingTimeSegments + " min</span>";
         } else if (cardioRaw <= 0) {
-          // nur Kraft
           breakBetween = 0;
           strengthMinutes = trainingBudget;
           cardioMinutes = 0;
@@ -1084,7 +1271,6 @@
           els.ratioInfo.innerHTML =
             "Nur Kraft: <span class=\"accent-text\">" + trainingTimeSegments + " min</span>";
         } else {
-          // beide aktiv -> Pause zwischen Kraft & Cardio einplanen
           breakBetween = s.breakBetween || 0;
           const segmentsBudget = trainingBudget - breakBetween;
           if (segmentsBudget <= 0) {
@@ -1162,21 +1348,30 @@
         addHeader("Sauna");
 
         const count = s.saunaCount;
+        const one = count === 1;
 
         add("Abduschen vor Sauna", "sauna-1");
         t += s.preSaunaShower;
 
-        add("Beginn Saunagang 1", "sauna-1");
-        t += s.saunaDurations[0] ?? s.saunaDurationEffective;
-        add("Ende Saunagang 1", "sauna-1");
+        // Gang 1
+        const saunaLabelStart1 = one ? "Beginn Saunagang" : "Beginn Saunagang 1";
+        const saunaLabelEnd1 = one ? "Ende Saunagang" : "Ende Saunagang 1";
+        const relaxLabelStart1 = one ? "Beginn Relax" : "Beginn Relax 1";
+        const relaxLabelEnd1 = one ? "Ende Relax" : "Ende Relax 1";
+        const afterLabel1 = one ? "Abduschen nach Saunagang" : "Abduschen nach Saunagang 1";
 
-        add("Abduschen nach Saunagang 1", "sauna-relax-1");
+        add(saunaLabelStart1, "sauna-1");
+        t += s.saunaDurations[0] ?? s.saunaDurationEffective;
+        add(saunaLabelEnd1, "sauna-1");
+
+        add(afterLabel1, "sauna-relax-1");
         t += s.postSaunaShower;
 
-        add("Beginn Relax 1", "sauna-relax-1");
+        add(relaxLabelStart1, "sauna-relax-1");
         t += s.relaxDurations[0] ?? s.relaxDurationEffective;
-        add("Ende Relax 1", "sauna-relax-1");
+        add(relaxLabelEnd1, "sauna-relax-1");
 
+        // Weitere Gänge
         for (let i = 2; i <= count; i++) {
           const idx = i - 1;
           const gSauna = "sauna-session-" + i;
@@ -1209,7 +1404,18 @@
 
       add("Zuhause", "finish-home");
 
-      // Summary oben
+      const saunaSummaryActive = sauna && s.saunaCount > 0;
+
+      // Sauna-Gesamtzeit (Sauna + Relax)
+      let saunaTotal = 0;
+      if (saunaSummaryActive) {
+        for (let i = 0; i < s.saunaCount; i++) {
+          saunaTotal += (s.saunaDurations[i] ?? s.saunaDurationEffective) +
+                        (s.relaxDurations[i] ?? s.relaxDurationEffective);
+        }
+      }
+      const saunaCountLabel = s.saunaCount === 1 ? "1 Gang" : s.saunaCount + " Gänge";
+
       let summaryHtml =
         '<div class="summary-row">' +
           '<span>Trainings-Zeit gesamt:</span>' +
@@ -1220,14 +1426,7 @@
           '<span class="summary-highlight">' + strengthMinutes + ' / ' + cardioMinutes + '</span>' +
         '</div>';
 
-      if (sauna && s.saunaCount > 0) {
-        let saunaTotal = 0;
-        for (let i = 0; i < s.saunaCount; i++) {
-          saunaTotal += (s.saunaDurations[i] ?? s.saunaDurationEffective) +
-                        (s.relaxDurations[i] ?? s.relaxDurationEffective);
-        }
-        const saunaCountLabel = s.saunaCount === 1 ? "1 Gang" : s.saunaCount + " Gänge";
-
+      if (saunaSummaryActive) {
         summaryHtml +=
           '<div class="summary-row">' +
             '<span>Sauna-Zeit gesamt:</span>' +
@@ -1271,14 +1470,19 @@
     });
 
     els.ratioSlider.addEventListener("input", function () {
-      if (!lastPlan) return;
+      if (!lastPlan || lastPlan.saunaOnly) return;
       renderPlan();
     });
 
     els.cardioEnabled.addEventListener("change", function () {
+      if (els.saunaOnly.checked) {
+        // In Sauna-only Modus sollte Cardio eigentlich nicht erreichbar sein,
+        // aber falls doch: nichts tun.
+        return;
+      }
+
       if (els.cardioEnabled.checked) {
         els.ratioRow.style.display = "block";
-        // bei Reaktivierung auf 50:50 springen
         if (lastPlan) {
           const tb = lastPlan.trainingBudget || 60;
           const half = Math.floor(tb / 2 / 5) * 5;
@@ -1294,18 +1498,95 @@
       }
     });
 
+    function recalcSaunaOnlySuggestion() {
+      if (!els.saunaEnabled.checked || !els.saunaOnly.checked) return;
+
+      const start = parseTimeToMinutes(els.startTime.value);
+      const end = parseTimeToMinutes(els.endTime.value);
+      if (start === null || end === null) return;
+
+      let total = end - start;
+      if (total <= 0) total += 24 * 60;
+
+      const s = currentSettings;
+      const fixBefore = s.driveTo + s.changeBefore;
+      const fixAfter = s.showerAfter + s.changeAfter + s.driveBack;
+
+      const saunaBudget = total - (fixBefore + fixAfter);
+      if (saunaBudget <= 0) {
+        showMainMessage("Zeitfenster zu knapp für Sauna only.", "error");
+        return;
+      }
+
+      const baseSauna = toInt(els.saunaDurationInline.value, s.saunaDuration);
+      const baseRelax = toInt(els.relaxDurationInline.value, s.relaxDuration);
+      const timePerGang = baseSauna + s.postSaunaShower + baseRelax;
+
+      const usable = saunaBudget - s.preSaunaShower;
+      if (usable <= 0 || timePerGang <= 0) {
+        showMainMessage("Zeitfenster reicht nicht für einen Saunagang.", "error");
+        return;
+      }
+
+      const maxGangs = Math.floor(usable / timePerGang);
+      if (maxGangs <= 0) {
+        showMainMessage("Zeitfenster reicht nicht für einen Saunagang.", "error");
+        return;
+      }
+
+      const suggested = Math.min(2, maxGangs);
+      els.saunaCountInline.value = suggested;
+      updateSaunaSessionsUI();
+      showMainMessage(
+        "Sauna only: Maximal " + maxGangs + " Saunagänge mit deinen Standardwerten möglich.",
+        "info"
+      );
+    }
+
     els.saunaEnabled.addEventListener("change", function () {
       if (els.saunaEnabled.checked) {
         els.saunaInlineRow.style.display = "flex";
         els.saunaDurationInline.value = currentSettings.saunaDuration;
         els.relaxDurationInline.value = currentSettings.relaxDuration;
         els.saunaCountInline.value = 1;
+        els.saunaOnlyBlock.style.display = "flex";
       } else {
         els.saunaInlineRow.style.display = "none";
         els.saunaSessionsContainer.style.display = "none";
         els.saunaSessionsContainer.innerHTML = "";
+        els.saunaOnly.checked = false;
+        els.saunaOnlyBlock.style.display = "none";
+
+        // Cardio + Regler wieder normal anzeigen
+        els.cardioBlock.style.display = "flex";
+        if (els.cardioEnabled.checked) {
+          els.ratioRow.style.display = "block";
+        }
       }
       updateSaunaSessionsUI();
+      if (lastPlan) {
+        calculatePlan();
+      }
+    });
+
+    els.saunaOnly.addEventListener("change", function () {
+      if (els.saunaOnly.checked) {
+        // Cardio aus + verstecken
+        els.cardioEnabled.checked = false;
+        els.cardioBlock.style.display = "none";
+        els.ratioRow.style.display = "none";
+        showMainMessage("Sauna only Modus aktiv.", "info");
+        recalcSaunaOnlySuggestion();
+      } else {
+        // Cardio-Block zurückholen, Slider je nach Checkbox
+        els.cardioBlock.style.display = "flex";
+        if (els.cardioEnabled.checked) {
+          els.ratioRow.style.display = "block";
+        } else {
+          els.ratioRow.style.display = "none";
+        }
+        showMainMessage("", "");
+      }
       if (lastPlan) {
         calculatePlan();
       }
@@ -1322,6 +1603,9 @@
         updateSaunaSessionsUI();
         if (lastPlan) {
           calculatePlan();
+        }
+        if (els.saunaOnly.checked) {
+          recalcSaunaOnlySuggestion();
         }
       });
     });
@@ -1389,6 +1673,7 @@
     setDefaultTimes();
     els.ratioInfo.textContent = "erst nach der ersten Berechnung sinnvoll nutzbar";
     els.saunaInlineRow.style.display = els.saunaEnabled.checked ? "flex" : "none";
+    els.saunaOnlyBlock.style.display = els.saunaEnabled.checked ? "flex" : "none";
     els.ratioRow.style.display = els.cardioEnabled.checked ? "block" : "none";
     updateSaunaSessionsUI();
   </script>
