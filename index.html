@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <title>Gym-Planner</title>
   <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icons/app-icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/app-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     :root {
@@ -14,7 +14,7 @@
       --bg-card: #181818;
       --bg-card-alt: #202020;
       --accent: #3dd8a3;
-      --accent-soft: rgba(61, 216, 163, 0.12);
+      --accent-soft: rgba(3, 216, 163, 0.12);
       --text: #f5f5f5;
       --text-muted: #aaaaaa;
       --danger: #ff6b6b;
@@ -559,6 +559,14 @@
         <div class="card-title">Zeitfenster</div>
       </div>
 
+      <!-- Reverse-Modus -->
+      <div class="toggle-block" id="reverseBlock">
+        <label class="checkbox">
+          <input type="checkbox" id="reverseEnabled">
+          <span>Reverse-Modus</span>
+        </label>
+      </div>
+
       <div class="flex-row">
         <div class="flex-1">
           <label for="startTime" class="center-label">Abfahrt</label>
@@ -584,7 +592,13 @@
           <span>Verhältnis Kraft / Cardio</span>
           <span id="ratioInfo">erst nach der ersten Berechnung sinnvoll nutzbar</span>
         </div>
-        <input type="range" id="ratioSlider" min="0" max="60" step="5" value="30">
+        <input type="range" id="ratioSlider" min="0" max="60" step="1" value="30">
+      </div>
+
+      <!-- Trainingszeit gesamt (nur Reverse-Modus relevant) -->
+      <div id="trainTotalRow" style="display:none; margin-top:8px;">
+        <label for="trainTotal" class="center-label">Trainingszeit gesamt (min)</label>
+        <input type="number" id="trainTotal" min="0" inputmode="numeric" class="inline-input">
       </div>
 
       <!-- Sauna-Block -->
@@ -756,6 +770,8 @@
     const els = {
       startTime: document.getElementById("startTime"),
       endTime: document.getElementById("endTime"),
+      reverseEnabled: document.getElementById("reverseEnabled"),
+      trainTotal: document.getElementById("trainTotal"),
       cardioEnabled: document.getElementById("cardioEnabled"),
       saunaEnabled: document.getElementById("saunaEnabled"),
       saunaOnly: document.getElementById("saunaOnly"),
@@ -801,6 +817,7 @@
     let currentSettings = { ...defaultSettings };
     let lastPlan = null;
     let lastCopyText = "";
+    let reverseAnchor = "start"; // "start" oder "end"
 
     function toInt(value, fallback) {
       const n = parseInt(value, 10);
@@ -991,6 +1008,14 @@
       els.copyMessage.textContent = "";
       lastCopyText = "";
 
+      const reverse = els.reverseEnabled.checked;
+
+      if (reverse) {
+        calculatePlanReverse();
+        return;
+      }
+
+      // Forward-Modus (bisheriges Verhalten)
       const start = parseTimeToMinutes(els.startTime.value);
       const end = parseTimeToMinutes(els.endTime.value);
 
@@ -1046,7 +1071,7 @@
         }
       }
 
-      // SAUNA-ONLY MODUS
+      // SAUNA-ONLY MODUS (forward)
       if (saunaOnly) {
         const fixAfter = s.showerAfter + s.changeAfter + s.driveBack;
         const saunaBudget = total - (fixBefore + fixAfter);
@@ -1086,6 +1111,7 @@
 
         lastPlan = {
           saunaOnly: true,
+          mode: "forward",
           start,
           end,
           saunaBudget,
@@ -1105,7 +1131,7 @@
         return;
       }
 
-      // NORMALER TRAININGS-MODUS (Training + ggf. Sauna)
+      // NORMALER TRAININGS-MODUS (forward)
       let fixAfter;
       if (sauna) {
         let saunaRelaxSum = 0;
@@ -1135,19 +1161,180 @@
         return;
       }
 
-      const sliderMax = Math.max(5, Math.floor(trainingBudget / 5) * 5);
+      const sliderMax = Math.max(5, trainingBudget);
       els.ratioSlider.max = sliderMax;
+      els.ratioSlider.step = 1;
       let sliderValue = parseInt(els.ratioSlider.value, 10);
       if (!Number.isFinite(sliderValue) || sliderValue < 0 || sliderValue > sliderMax) {
-        sliderValue = Math.floor(sliderMax / 2 / 5) * 5;
+        sliderValue = Math.floor(sliderMax / 2);
         els.ratioSlider.value = sliderValue;
       }
 
       lastPlan = {
         saunaOnly: false,
+        mode: "forward",
         start,
         end,
         trainingBudget,
+        cardio,
+        sauna,
+        settings: {
+          ...s,
+          saunaDurationEffective,
+          relaxDurationEffective,
+          saunaCount,
+          saunaDurations,
+          relaxDurations
+        }
+      };
+
+      renderPlan();
+    }
+
+    function calculatePlanReverse() {
+      const s = currentSettings;
+      const cardio = els.cardioEnabled.checked;
+      const sauna = els.saunaEnabled.checked;
+      const saunaOnly = sauna && els.saunaOnly.checked;
+
+      let trainingTotal = toInt(els.trainTotal.value, 0);
+      if (!saunaOnly && trainingTotal < 0) trainingTotal = 0;
+
+      // Sauna-Daten wie im Forward-Modus ermitteln
+      let saunaDurationEffective = s.saunaDuration;
+      let relaxDurationEffective = s.relaxDuration;
+      let saunaCount = 1;
+      let saunaDurations = [];
+      let relaxDurations = [];
+
+      if (sauna) {
+        saunaDurationEffective = toInt(els.saunaDurationInline.value, s.saunaDuration);
+        relaxDurationEffective = toInt(els.relaxDurationInline.value, s.relaxDuration);
+        saunaCount = toInt(els.saunaCountInline.value, 1);
+        if (saunaCount < 1) saunaCount = 1;
+        if (saunaCount > 5) saunaCount = 5;
+        els.saunaCountInline.value = saunaCount;
+
+        const container = els.saunaSessionsContainer;
+        if (container && container.children.length && saunaCount > 1) {
+          for (let i = 1; i <= saunaCount; i++) {
+            const sdInput = document.getElementById("saunaDur_" + i);
+            const rdInput = document.getElementById("relaxDur_" + i);
+            saunaDurations.push(
+              sdInput ? toInt(sdInput.value, saunaDurationEffective) : saunaDurationEffective
+            );
+            relaxDurations.push(
+              rdInput ? toInt(rdInput.value, relaxDurationEffective) : relaxDurationEffective
+            );
+          }
+        } else {
+          for (let i = 0; i < saunaCount; i++) {
+            saunaDurations.push(saunaDurationEffective);
+            relaxDurations.push(relaxDurationEffective);
+          }
+        }
+      }
+
+      // Fixzeiten
+      const fixBefore = s.driveTo + s.changeBefore;
+      const fixAfter = s.showerAfter + s.changeAfter + s.driveBack;
+
+      // Trainingsblock (nur wenn nicht Sauna-only)
+      let strengthMinutes = 0;
+      let cardioMinutes = 0;
+      let breakBetween = 0;
+      let trainingBlockTotal = 0;
+
+      if (!saunaOnly && trainingTotal > 0) {
+        // Slider auf 0..trainingTotal begrenzen
+        let strengthRaw = parseInt(els.ratioSlider.value, 10);
+        if (!Number.isFinite(strengthRaw)) strengthRaw = Math.floor(trainingTotal / 2);
+        if (strengthRaw < 0) strengthRaw = 0;
+        if (strengthRaw > trainingTotal) strengthRaw = trainingTotal;
+
+        els.ratioSlider.min = 0;
+        els.ratioSlider.max = trainingTotal;
+        els.ratioSlider.step = 1;
+        els.ratioSlider.value = strengthRaw;
+
+        if (!cardio) {
+          strengthMinutes = trainingTotal;
+          cardioMinutes = 0;
+          breakBetween = 0;
+          trainingBlockTotal = trainingTotal;
+        } else {
+          strengthMinutes = strengthRaw;
+          cardioMinutes = trainingTotal - strengthRaw;
+          if (strengthMinutes > 0 && cardioMinutes > 0) {
+            breakBetween = s.breakBetween || 0;
+          } else {
+            breakBetween = 0;
+          }
+          trainingBlockTotal = trainingTotal + breakBetween;
+        }
+      } else {
+        // Sauna only oder TrainingTotal = 0
+        trainingTotal = 0;
+        strengthMinutes = 0;
+        cardioMinutes = 0;
+        breakBetween = 0;
+        trainingBlockTotal = 0;
+      }
+
+      // Sauna-Block
+      let saunaBlockTotal = 0;
+      if (sauna && saunaCount > 0) {
+        saunaBlockTotal = s.preSaunaShower;
+        for (let i = 0; i < saunaCount; i++) {
+          saunaBlockTotal += (saunaDurations[i] ?? saunaDurationEffective) +
+                             s.postSaunaShower +
+                             (relaxDurations[i] ?? relaxDurationEffective);
+        }
+      }
+
+      const totalDuration = fixBefore + trainingBlockTotal + saunaBlockTotal + fixAfter;
+
+      if (totalDuration <= 0) {
+        showMainMessage("Mit den aktuellen Einstellungen kann kein Zeitplan erstellt werden.", "error");
+        els.planOutput.innerHTML =
+          '<div class="message error">Bitte Trainingszeit oder Saunadaten prüfen.</div>';
+        return;
+      }
+
+      // Abfahrt/Zuhause aus Anchor berechnen
+      let start = parseTimeToMinutes(els.startTime.value);
+      let end = parseTimeToMinutes(els.endTime.value);
+
+      const now = new Date();
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+      if (reverseAnchor === "end" && end !== null) {
+        start = end - totalDuration;
+      } else {
+        // Anchor = start (oder fallback)
+        if (start === null && end !== null) {
+          start = end - totalDuration;
+          reverseAnchor = "end";
+        } else if (start === null && end === null) {
+          // Fallback: jetzt + 15, gerundet
+          let base = nowMinutes + 15;
+          const quarter = 15;
+          base = Math.ceil(base / quarter) * quarter;
+          start = base;
+          reverseAnchor = "start";
+        }
+        end = start + totalDuration;
+      }
+
+      els.startTime.value = formatMinutesToTime(start);
+      els.endTime.value = formatMinutesToTime(end);
+
+      lastPlan = {
+        saunaOnly: saunaOnly,
+        mode: "reverse",
+        start,
+        end,
+        trainTotal: trainingTotal,
         cardio,
         sauna,
         settings: {
@@ -1327,66 +1514,131 @@
     }
 
     function renderTrainingSaunaPlan() {
-      const { start, trainingBudget, cardio, sauna, settings: s } = lastPlan;
+      const { start, cardio, sauna, settings: s, mode } = lastPlan;
 
-      let strengthRaw = parseInt(els.ratioSlider.value, 10);
-      if (!Number.isFinite(strengthRaw) || strengthRaw < 0) strengthRaw = 0;
-      if (strengthRaw > trainingBudget) strengthRaw = trainingBudget;
+      let strengthMinutes, cardioMinutes, breakBetween, trainingTimeSegments;
 
-      let strengthMinutes, cardioMinutes, breakBetween;
-      let trainingTimeSegments;
+      if (mode === "reverse") {
+        const trainTotal = lastPlan.trainTotal || 0;
 
-      if (!cardio) {
-        breakBetween = 0;
-        strengthMinutes = trainingBudget;
-        cardioMinutes = 0;
-        trainingTimeSegments = trainingBudget;
-        els.ratioSlider.disabled = true;
-        els.ratioInfo.innerHTML =
-          "Nur Kraft: <span class=\"accent-text\">" + trainingTimeSegments + " min</span>";
-      } else {
-        let cardioRaw = trainingBudget - strengthRaw;
-
-        if (strengthRaw <= 0) {
+        if (!cardio) {
+          strengthMinutes = trainTotal;
+          cardioMinutes = 0;
           breakBetween = 0;
-          strengthMinutes = 0;
-          cardioMinutes = trainingBudget;
-          trainingTimeSegments = trainingBudget;
+          trainingTimeSegments = trainTotal;
+
+          els.ratioSlider.min = 0;
+          els.ratioSlider.max = trainTotal || 1;
+          els.ratioSlider.step = 1;
+          els.ratioSlider.value = trainTotal;
+          els.ratioSlider.disabled = true;
+
+          if (trainTotal > 0) {
+            els.ratioInfo.innerHTML =
+              'Nur Kraft: <span class="accent-text">' + trainingTimeSegments + ' min</span>';
+          } else {
+            els.ratioInfo.textContent = "Keine Trainingszeit geplant.";
+          }
+        } else {
+          let trainTotal = lastPlan.trainTotal || 0;
+          if (trainTotal < 0) trainTotal = 0;
+
+          els.ratioSlider.min = 0;
+          els.ratioSlider.max = trainTotal || 1;
+          els.ratioSlider.step = 1;
+
+          let strengthRaw = parseInt(els.ratioSlider.value, 10);
+          if (!Number.isFinite(strengthRaw)) strengthRaw = Math.floor(trainTotal / 2);
+          if (strengthRaw < 0) strengthRaw = 0;
+          if (strengthRaw > trainTotal) strengthRaw = trainTotal;
+          els.ratioSlider.value = strengthRaw;
+
+          strengthMinutes = strengthRaw;
+          cardioMinutes = trainTotal - strengthRaw;
+          trainingTimeSegments = trainTotal;
+
+          if (strengthMinutes > 0 && cardioMinutes > 0) {
+            breakBetween = s.breakBetween || 0;
+          } else {
+            breakBetween = 0;
+          }
+
           els.ratioSlider.disabled = false;
-          els.ratioInfo.innerHTML =
-            "Nur Cardio: <span class=\"accent-text\">" + trainingTimeSegments + " min</span>";
-        } else if (cardioRaw <= 0) {
+
+          if (strengthMinutes <= 0 && cardioMinutes > 0) {
+            els.ratioInfo.innerHTML =
+              'Nur Cardio: <span class="accent-text">' + cardioMinutes + ' min</span>';
+          } else if (cardioMinutes <= 0 && strengthMinutes > 0) {
+            els.ratioInfo.innerHTML =
+              'Nur Kraft: <span class="accent-text">' + strengthMinutes + ' min</span>';
+          } else if (trainingTimeSegments > 0) {
+            els.ratioInfo.innerHTML =
+              'Kraft: <span class="accent-text">' + strengthMinutes + ' min</span> · ' +
+              'Cardio: <span class="accent-text">' + cardioMinutes + ' min</span>';
+          } else {
+            els.ratioInfo.textContent = "Keine Trainingszeit geplant.";
+          }
+        }
+      } else {
+        // Forward-Modus (altes Verhalten, aber 1-Min-Schritte)
+        const trainingBudget = lastPlan.trainingBudget;
+
+        let strengthRaw = parseInt(els.ratioSlider.value, 10);
+        if (!Number.isFinite(strengthRaw) || strengthRaw < 0) strengthRaw = 0;
+        if (strengthRaw > trainingBudget) strengthRaw = trainingBudget;
+
+        if (!cardio) {
           breakBetween = 0;
           strengthMinutes = trainingBudget;
           cardioMinutes = 0;
           trainingTimeSegments = trainingBudget;
-          els.ratioSlider.disabled = false;
+          els.ratioSlider.disabled = true;
           els.ratioInfo.innerHTML =
-            "Nur Kraft: <span class=\"accent-text\">" + trainingTimeSegments + " min</span>";
+            'Nur Kraft: <span class="accent-text">' + trainingTimeSegments + ' min</span>';
         } else {
-          breakBetween = s.breakBetween || 0;
-          const segmentsBudget = trainingBudget - breakBetween;
-          if (segmentsBudget <= 0) {
-            showMainMessage(
-              "Zeitfenster zu knapp für die Pause zwischen Kraft und Cardio.",
-              "error"
-            );
-            els.planOutput.innerHTML =
-              '<div class="message error">Zeitfenster zu knapp für Trainings-Pause.</div>';
-            return;
+          let cardioRaw = trainingBudget - strengthRaw;
+
+          if (strengthRaw <= 0) {
+            breakBetween = 0;
+            strengthMinutes = 0;
+            cardioMinutes = trainingBudget;
+            trainingTimeSegments = trainingBudget;
+            els.ratioSlider.disabled = false;
+            els.ratioInfo.innerHTML =
+              'Nur Cardio: <span class="accent-text">' + trainingTimeSegments + ' min</span>';
+          } else if (cardioRaw <= 0) {
+            breakBetween = 0;
+            strengthMinutes = trainingBudget;
+            cardioMinutes = 0;
+            trainingTimeSegments = trainingBudget;
+            els.ratioSlider.disabled = false;
+            els.ratioInfo.innerHTML =
+              'Nur Kraft: <span class="accent-text">' + trainingTimeSegments + ' min</span>';
+          } else {
+            breakBetween = s.breakBetween || 0;
+            const segmentsBudget = trainingBudget - breakBetween;
+            if (segmentsBudget <= 0) {
+              showMainMessage(
+                "Zeitfenster zu knapp für die Pause zwischen Kraft und Cardio.",
+                "error"
+              );
+              els.planOutput.innerHTML =
+                '<div class="message error">Zeitfenster zu knapp für Trainings-Pause.</div>';
+              return;
+            }
+
+            const ratio = strengthRaw / trainingBudget;
+            strengthMinutes = Math.round(segmentsBudget * ratio);
+            if (strengthMinutes < 0) strengthMinutes = 0;
+            if (strengthMinutes > segmentsBudget) strengthMinutes = segmentsBudget;
+            cardioMinutes = segmentsBudget - strengthMinutes;
+
+            trainingTimeSegments = segmentsBudget;
+            els.ratioSlider.disabled = false;
+            els.ratioInfo.innerHTML =
+              'Kraft: <span class="accent-text">' + strengthMinutes + ' min</span> · ' +
+              'Cardio: <span class="accent-text">' + cardioMinutes + ' min</span>';
           }
-
-          const ratio = strengthRaw / trainingBudget;
-          strengthMinutes = Math.round((segmentsBudget * ratio) / 5) * 5;
-          if (strengthMinutes < 0) strengthMinutes = 0;
-          if (strengthMinutes > segmentsBudget) strengthMinutes = segmentsBudget;
-          cardioMinutes = segmentsBudget - strengthMinutes;
-
-          trainingTimeSegments = segmentsBudget;
-          els.ratioSlider.disabled = false;
-          els.ratioInfo.innerHTML =
-            "Kraft: <span class=\"accent-text\">" + strengthMinutes + " min</span> · " +
-            "Cardio: <span class=\"accent-text\">" + cardioMinutes + " min</span>";
         }
       }
 
@@ -1424,9 +1676,9 @@
       }
 
       // Pause zwischen Kraft & Cardio
-      if (strengthMinutes > 0 && cardioMinutes > 0 && (s.breakBetween || 0) > 0) {
+      if (strengthMinutes > 0 && cardioMinutes > 0 && breakBetween > 0) {
         add("Pause zwischen Kraft & Cardio", "training-break");
-        t += s.breakBetween;
+        t += breakBetween;
       }
 
       // Cardio
@@ -1511,11 +1763,11 @@
       let summaryHtml =
         '<div class="summary-row">' +
           '<span>Trainings-Zeit gesamt:</span>' +
-          '<span class="summary-highlight">' + trainingTimeSegments + ' min</span>' +
+          '<span class="summary-highlight">' + (trainingTimeSegments || 0) + ' min</span>' +
         '</div>' +
         '<div class="summary-row">' +
           '<span>Kraft / Cardio (min):</span>' +
-          '<span class="summary-highlight">' + strengthMinutes + ' / ' + cardioMinutes + '</span>' +
+          '<span class="summary-highlight">' + (strengthMinutes || 0) + ' / ' + (cardioMinutes || 0) + '</span>' +
         '</div>';
 
       if (saunaSummaryActive) {
@@ -1565,8 +1817,12 @@
     });
 
     els.ratioSlider.addEventListener("input", function () {
-      if (!lastPlan || lastPlan.saunaOnly) return;
-      renderPlan();
+      if (els.reverseEnabled.checked) {
+        calculatePlan();
+      } else {
+        if (!lastPlan || lastPlan.saunaOnly) return;
+        renderPlan();
+      }
     });
 
     els.cardioEnabled.addEventListener("change", function () {
@@ -1576,10 +1832,15 @@
 
       if (els.cardioEnabled.checked) {
         els.ratioRow.style.display = "block";
-        if (lastPlan) {
+        if (lastPlan && lastPlan.mode === "forward") {
           const tb = lastPlan.trainingBudget || 60;
-          const half = Math.floor(tb / 2 / 5) * 5;
+          const half = Math.floor(tb / 2);
           els.ratioSlider.value = half;
+        } else if (lastPlan && lastPlan.mode === "reverse") {
+          const tt = lastPlan.trainTotal || 0;
+          els.ratioSlider.min = 0;
+          els.ratioSlider.max = tt || 1;
+          els.ratioSlider.value = Math.floor(tt / 2);
         } else {
           els.ratioSlider.value = 30;
         }
@@ -1593,6 +1854,11 @@
 
     function recalcSaunaOnlySuggestion() {
       if (!els.saunaEnabled.checked || !els.saunaOnly.checked) return;
+      if (els.reverseEnabled.checked) {
+        // Im Reverse-Modus gibt es kein fixiertes Zeitfenster, daher keine Budgetprüfung
+        els.saunaValidation.textContent = "";
+        return;
+      }
 
       const start = parseTimeToMinutes(els.startTime.value);
       const end = parseTimeToMinutes(els.endTime.value);
@@ -1760,6 +2026,57 @@
       });
     });
 
+    // Reverse-Modus Toggle
+    els.reverseEnabled.addEventListener("change", function () {
+      const active = els.reverseEnabled.checked;
+      const trainRow = document.getElementById("trainTotalRow");
+      if (active) {
+        trainRow.style.display = "block";
+
+        // Trainingszeit gesamt initial setzen
+        let initialTrain = 90;
+        if (lastPlan && lastPlan.mode === "forward" && !lastPlan.saunaOnly) {
+          initialTrain = lastPlan.trainingBudget || 90;
+        } else if (lastPlan && lastPlan.mode === "reverse") {
+          initialTrain = lastPlan.trainTotal || 90;
+        }
+        els.trainTotal.value = initialTrain;
+
+        // Slider auf 0..TrainTotal
+        els.ratioSlider.min = 0;
+        els.ratioSlider.max = initialTrain || 1;
+        els.ratioSlider.step = 1;
+        els.ratioSlider.value = Math.floor(initialTrain / 2);
+
+        calculatePlan();
+      } else {
+        trainRow.style.display = "none";
+        calculatePlan();
+      }
+    });
+
+    // Start/Zuhause als Anchor im Reverse-Modus
+    els.startTime.addEventListener("change", function () {
+      if (els.reverseEnabled.checked) {
+        reverseAnchor = "start";
+        calculatePlan();
+      }
+    });
+
+    els.endTime.addEventListener("change", function () {
+      if (els.reverseEnabled.checked) {
+        reverseAnchor = "end";
+        calculatePlan();
+      }
+    });
+
+    // Trainingszeit gesamt geändert
+    els.trainTotal.addEventListener("input", function () {
+      if (els.reverseEnabled.checked) {
+        calculatePlan();
+      }
+    });
+
     // Copy-Button
     els.copyButton.addEventListener("click", async function () {
       els.copyMessage.textContent = "";
@@ -1799,8 +2116,8 @@
     els.ratioRow.style.display = els.cardioEnabled.checked ? "block" : "none";
     updateSaunaSessionsUI();
 
-    // Start-Setup: 75 min Kraft / 30 min Cardio (bei Standard-Settings)
-    els.ratioSlider.value = 80; // sorgt bei den Default-Zeiten für 75/30
+    // Start-Setup: 75 min Kraft / 30 min Cardio (bei Standard-Settings), Näherung
+    els.ratioSlider.value = 80;
     calculatePlan();
   </script>
 </body>
