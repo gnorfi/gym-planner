@@ -83,7 +83,8 @@
     }
 
     input[type="time"],
-    input[type="number"] {
+    input[type="number"],
+    input[type="text"] {
       width: 100%;
       padding: 8px 10px;
       border-radius: var(--radius-md);
@@ -95,7 +96,8 @@
     }
 
     input[type="time"]:focus,
-    input[type="number"]:focus {
+    input[type="number"]:focus,
+    input[type="text"]:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 1px var(--accent-soft);
     }
@@ -232,7 +234,7 @@
       justify-content: space-between;
       font-size: 0.8rem;
       color: var(--text-muted);
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       gap: 8px;
       flex-wrap: wrap;
     }
@@ -241,31 +243,33 @@
       width: 100%;
       -webkit-appearance: none;
       appearance: none;
-      height: 4px;
+      height: 8px;
       border-radius: 999px;
       background: #333;
       outline: none;
+      margin-top: 2px;
+      margin-bottom: 4px;
     }
 
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 18px;
-      height: 18px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       background: var(--accent);
-      box-shadow: 0 0 0 6px var(--accent-soft);
+      box-shadow: 0 0 0 7px var(--accent-soft);
       cursor: pointer;
       border: none;
     }
 
     input[type="range"]::-moz-range-thumb {
-      width: 18px;
-      height: 18px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       background: var(--accent);
       border: none;
-      box-shadow: 0 0 0 6px var(--accent-soft);
+      box-shadow: 0 0 0 7px var(--accent-soft);
       cursor: pointer;
     }
 
@@ -305,6 +309,7 @@
       border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
       border-left: 3px solid transparent;
       padding-left: 8px;
+      transition: margin-top 0.1s ease, padding-top 0.1s ease;
     }
 
     .timeline-item:last-child {
@@ -341,6 +346,12 @@
 
     .timeline-item.cat-home {
       border-left-color: #3dd8a3;
+    }
+
+    .timeline-item.group-start {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
     }
 
     .time {
@@ -430,11 +441,11 @@
       <div class="sauna-inline-row" id="saunaInlineRow">
         <div class="flex-1">
           <label for="saunaDurationInline">Sauna (min)</label>
-          <input type="number" id="saunaDurationInline" min="0">
+          <input type="number" id="saunaDurationInline" min="0" inputmode="numeric">
         </div>
         <div class="flex-1">
           <label for="relaxDurationInline">Relax (min)</label>
-          <input type="number" id="relaxDurationInline" min="0">
+          <input type="number" id="relaxDurationInline" min="0" inputmode="numeric">
         </div>
       </div>
 
@@ -785,61 +796,65 @@
       let t = start;
       const steps = [];
 
-      function add(label, catKey) {
+      function add(label, catKey, groupKey) {
         steps.push({
           time: formatMinutesToTime(t),
           label: label,
-          cat: catKey || null
+          cat: catKey || null,
+          group: groupKey || null
         });
       }
 
-      // Abfahrt & Ankunft
-      add("Abfahrt", "drive");
+      // Abfahrt & Ankunft (Gruppe: Hinfahrt)
+      add("Abfahrt", "drive", "drive-out");
       t += s.driveTo;
 
-      add("Ankunft im Gym", "drive");
+      add("Ankunft im Gym", "drive", "drive-out");
       t += s.changeBefore;
 
-      // Kraft
-      add("Beginn Kraft-Training", "strength");
+      // Kraft (Gruppe: Kraft)
+      add("Beginn Kraft-Training", "strength", "strength");
       t += strengthMinutes;
-      add("Ende Kraft-Training", "strength");
+      add("Ende Kraft-Training", "strength", "strength");
 
-      // Cardio
+      // Cardio (Gruppe: Cardio)
       if (cardio && cardioMinutes > 0) {
-        add("Beginn Cardio-Training", "cardio");
+        add("Beginn Cardio-Training", "cardio", "cardio");
         t += cardioMinutes;
-        add("Ende Cardio-Training", "cardio");
+        add("Ende Cardio-Training", "cardio", "cardio");
       }
 
       // Sauna-Block
       if (sauna) {
-        add("Abduschen vor Sauna", "shower");
+        // Abduschen vor Sauna (eigene kleine Gruppe)
+        add("Abduschen vor Sauna", "shower", "sauna-pre");
         t += s.preSaunaShower;
 
-        add("Beginn Saunagang", "sauna");
+        // Saunagang (Beginn/Ende zusammengehörig)
+        add("Beginn Saunagang", "sauna", "sauna-session");
         t += s.saunaDurationEffective;
-        add("Ende Saunagang", "sauna");
+        add("Ende Saunagang", "sauna", "sauna-session");
 
-        add("Abduschen nach Sauna", "shower");
+        // Abduschen + Relax
+        add("Abduschen nach Sauna", "shower", "sauna-relax");
         t += s.postSaunaShower;
 
-        add("Beginn Relax im Ruheraum", "relax");
+        add("Beginn Relax im Ruheraum", "relax", "sauna-relax");
         t += s.relaxDurationEffective;
-        add("Ende Relax", "relax");
+        add("Ende Relax", "relax", "sauna-relax");
       }
 
-      // Abschluss
-      add("Duschen nach Training", "shower");
+      // Abschluss (Duschen, Anziehen, Heimfahrt, Zuhause) – eine Gruppe
+      add("Duschen nach Training", "shower", "finish");
       t += s.showerAfter;
 
-      add("Anziehen nach Training", "change");
+      add("Anziehen nach Training", "change", "finish");
       t += s.changeAfter;
 
-      add("Abfahrt nach Hause", "drive");
+      add("Abfahrt nach Hause", "drive", "finish");
       t += s.driveBack;
 
-      add("Zuhause", "home");
+      add("Zuhause", "home", "finish");
 
       const summaryHtml =
         '<div class="summary-row">' +
@@ -856,11 +871,17 @@
         '</div>';
 
       let html = '<div class="output-card">' + summaryHtml + '<ul class="timeline">';
+
+      let prevGroup = null;
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
         const catClass = step.cat ? " cat-" + step.cat : "";
+        const isGroupStart = step.group && step.group !== prevGroup;
+        const groupClass = isGroupStart ? " group-start" : "";
+        prevGroup = step.group || prevGroup;
+
         html +=
-          '<li class="timeline-item' + catClass + '">' +
+          '<li class="timeline-item' + catClass + groupClass + '">' +
             '<span class="time">' + step.time + '</span>' +
             '<span class="label">' + step.label + '</span>' +
           '</li>';
@@ -897,6 +918,16 @@
       if (lastPlan) {
         calculatePlan();
       }
+    });
+
+    // Sauna/Relax Inputs: Inhalt beim Antippen komplett markieren
+    [els.saunaDurationInline, els.relaxDurationInline].forEach(function (input) {
+      input.addEventListener("focus", function () {
+        // kleines Timeout, damit iOS nicht dazwischenfunkt
+        setTimeout(() => {
+          input.select();
+        }, 10);
+      });
     });
 
     els.saunaDurationInline.addEventListener("input", function () {
