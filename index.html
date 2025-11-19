@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Gym-Planer</title>
+  <title>Gym-Planner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     :root {
@@ -143,13 +143,10 @@
       text-align: center;
     }
 
-    .checkbox-row {
-      display: flex;
-      gap: 10px;
+    .toggle-block {
       margin-top: 12px;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
+      display: flex;
+      justify-content: center;
     }
 
     .checkbox {
@@ -159,7 +156,7 @@
       gap: 6px;
       font-size: 0.85rem;
       color: var(--text-muted);
-      flex: 1;
+      flex: 0 0 auto;
     }
 
     .checkbox input {
@@ -529,7 +526,7 @@
 <body>
   <div class="app">
     <header>
-      <h1>Gym-Planer</h1>
+      <h1>Gym-Planner</h1>
     </header>
 
     <!-- Haupt-Eingaben -->
@@ -549,11 +546,25 @@
         </div>
       </div>
 
-      <div class="checkbox-row">
+      <!-- Cardio-Block -->
+      <div class="toggle-block">
         <label class="checkbox">
           <input type="checkbox" id="cardioEnabled" checked>
           <span>Cardio einplanen</span>
         </label>
+      </div>
+
+      <!-- Verhältnis-Slider -->
+      <div class="ratio-row" id="ratioRow">
+        <div class="ratio-label">
+          <span>Verhältnis Kraft / Cardio</span>
+          <span id="ratioInfo">erst nach der ersten Berechnung sinnvoll nutzbar</span>
+        </div>
+        <input type="range" id="ratioSlider" min="0" max="60" step="5" value="30">
+      </div>
+
+      <!-- Sauna-Block -->
+      <div class="toggle-block">
         <label class="checkbox">
           <input type="checkbox" id="saunaEnabled">
           <span>Sauna einplanen</span>
@@ -577,15 +588,6 @@
       </div>
 
       <div class="sauna-sessions" id="saunaSessionsContainer"></div>
-
-      <!-- Verhältnis-Slider -->
-      <div class="ratio-row" id="ratioRow">
-        <div class="ratio-label">
-          <span>Verhältnis Kraft / Cardio</span>
-          <span id="ratioInfo">erst nach der ersten Berechnung sinnvoll nutzbar</span>
-        </div>
-        <input type="range" id="ratioSlider" min="0" max="60" step="5" value="30">
-      </div>
 
       <button id="planButton" class="primary-button" type="button" onclick="calculatePlan()">Plan berechnen</button>
       <div id="mainMessage" class="message"></div>
@@ -1207,25 +1209,35 @@
 
       add("Zuhause", "finish-home");
 
-      const saunaSummary = lastPlan.sauna
-        ? (s.saunaCount === 1
-            ? "Ja (1 Gang)"
-            : "Ja (" + s.saunaCount + " Gänge)")
-        : "Nein";
-
-      const summaryHtml =
+      // Summary oben
+      let summaryHtml =
         '<div class="summary-row">' +
-          '<span>Trainingszeit gesamt:</span>' +
+          '<span>Trainings-Zeit gesamt:</span>' +
           '<span class="summary-highlight">' + trainingTimeSegments + ' min</span>' +
         '</div>' +
         '<div class="summary-row">' +
           '<span>Kraft / Cardio (min):</span>' +
           '<span class="summary-highlight">' + strengthMinutes + ' / ' + cardioMinutes + '</span>' +
-        '</div>' +
-        '<div class="summary-row">' +
-          '<span>Sauna eingeplant:</span>' +
-          '<span class="summary-highlight">' + saunaSummary + '</span>' +
         '</div>';
+
+      if (sauna && s.saunaCount > 0) {
+        let saunaTotal = 0;
+        for (let i = 0; i < s.saunaCount; i++) {
+          saunaTotal += (s.saunaDurations[i] ?? s.saunaDurationEffective) +
+                        (s.relaxDurations[i] ?? s.relaxDurationEffective);
+        }
+        const saunaCountLabel = s.saunaCount === 1 ? "1 Gang" : s.saunaCount + " Gänge";
+
+        summaryHtml +=
+          '<div class="summary-row">' +
+            '<span>Sauna-Zeit gesamt:</span>' +
+            '<span class="summary-highlight">' + saunaTotal + ' min</span>' +
+          '</div>' +
+          '<div class="summary-row">' +
+            '<span>Saunagänge:</span>' +
+            '<span class="summary-highlight">' + saunaCountLabel + '</span>' +
+          '</div>';
+      }
 
       let html = '<div class="output-card">' + summaryHtml + '<ul class="timeline">';
 
@@ -1264,8 +1276,21 @@
     });
 
     els.cardioEnabled.addEventListener("change", function () {
+      if (els.cardioEnabled.checked) {
+        els.ratioRow.style.display = "block";
+        // bei Reaktivierung auf 50:50 springen
+        if (lastPlan) {
+          const tb = lastPlan.trainingBudget || 60;
+          const half = Math.floor(tb / 2 / 5) * 5;
+          els.ratioSlider.value = half;
+        } else {
+          els.ratioSlider.value = 30;
+        }
+      } else {
+        els.ratioRow.style.display = "none";
+      }
       if (lastPlan) {
-        renderPlan();
+        calculatePlan();
       }
     });
 
@@ -1364,6 +1389,7 @@
     setDefaultTimes();
     els.ratioInfo.textContent = "erst nach der ersten Berechnung sinnvoll nutzbar";
     els.saunaInlineRow.style.display = els.saunaEnabled.checked ? "flex" : "none";
+    els.ratioRow.style.display = els.cardioEnabled.checked ? "block" : "none";
     updateSaunaSessionsUI();
   </script>
 </body>
