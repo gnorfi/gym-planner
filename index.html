@@ -99,12 +99,11 @@
       text-align: center;
     }
 
-    /* Basis-Styling für Inputs */
+    /* Basis-Inputs */
     input[type="time"],
     input[type="number"],
     input[type="text"] {
       width: 100%;
-      padding: 6px 10px;
       border-radius: var(--radius-md);
       border: 1px solid var(--border);
       background: var(--bg-card-alt);
@@ -114,9 +113,20 @@
       display: block;
     }
 
-    /* Feste Höhe nur für Number/Text, nicht für native Time-Control */
+    /* Time: native Control, aber visuell wie die anderen */
+    input[type="time"] {
+      -webkit-appearance: none;
+      appearance: none;
+      padding: 0 10px;
+      height: 40px;
+      line-height: 40px;
+      text-align: center;
+    }
+
+    /* Number/Text */
     input[type="number"],
     input[type="text"] {
+      padding: 6px 10px;
       height: 36px;
     }
 
@@ -171,6 +181,29 @@
       margin: 0 auto;
       text-align: center;
       display: block;
+    }
+
+    .sauna-sessions {
+      margin-top: 6px;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .sauna-session-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .sauna-session-label {
+      min-width: 70px;
+    }
+
+    .sauna-session-row .inline-input {
+      max-width: 80px;
     }
 
     button {
@@ -388,6 +421,18 @@
       border-top: 1px solid rgba(255, 255, 255, 0.12);
     }
 
+    .timeline-header {
+      margin-top: 10px;
+      padding-top: 6px;
+      padding-bottom: 2px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #dddddd;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
     .time {
       font-feature-settings: "tnum" 1, "lnum" 1;
       font-variant-numeric: tabular-nums;
@@ -531,6 +576,8 @@
         </div>
       </div>
 
+      <div class="sauna-sessions" id="saunaSessionsContainer"></div>
+
       <!-- Verhältnis-Slider -->
       <div class="ratio-row" id="ratioRow">
         <div class="ratio-label">
@@ -665,6 +712,7 @@
       saunaDurationInline: document.getElementById("saunaDurationInline"),
       relaxDurationInline: document.getElementById("relaxDurationInline"),
       saunaCountInline: document.getElementById("saunaCountInline"),
+      saunaSessionsContainer: document.getElementById("saunaSessionsContainer"),
       ratioRow: document.getElementById("ratioRow"),
       ratioSlider: document.getElementById("ratioSlider"),
       ratioInfo: document.getElementById("ratioInfo"),
@@ -702,9 +750,9 @@
 
     function parseTimeToMinutes(value) {
       if (!value || !/^\d{2}:\d{2}$/.test(value)) return null;
-      const parts = value.split(":");
-      const h = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10);
+      const [hStr, mStr] = value.split(":");
+      const h = parseInt(hStr, 10);
+      const m = parseInt(mStr, 10);
       if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
       if (h < 0 || h > 23 || m < 0 || m > 59) return null;
       return h * 60 + m;
@@ -823,6 +871,50 @@
       hideToast();
     });
 
+    function updateSaunaSessionsUI() {
+      const container = els.saunaSessionsContainer;
+      if (!els.saunaEnabled.checked) {
+        container.style.display = "none";
+        container.innerHTML = "";
+        return;
+      }
+
+      const count = toInt(els.saunaCountInline.value, 1);
+      if (count <= 1) {
+        container.style.display = "none";
+        container.innerHTML = "";
+        return;
+      }
+
+      const baseSauna = toInt(els.saunaDurationInline.value, currentSettings.saunaDuration);
+      const baseRelax = toInt(els.relaxDurationInline.value, currentSettings.relaxDuration);
+
+      let html = "";
+      for (let i = 1; i <= count; i++) {
+        html +=
+          '<div class="sauna-session-row">' +
+            '<span class="sauna-session-label">Gang ' + i + ':</span>' +
+            '<span>Sauna</span>' +
+            '<input type="number" class="inline-input" id="saunaDur_' + i + '" min="0" inputmode="numeric" value="' + baseSauna + '">' +
+            '<span>Relax</span>' +
+            '<input type="number" class="inline-input" id="relaxDur_' + i + '" min="0" inputmode="numeric" value="' + baseRelax + '">' +
+          '</div>';
+      }
+
+      container.innerHTML = html;
+      container.style.display = "flex";
+
+      // Selektieren beim Fokussieren
+      Array.from(container.querySelectorAll("input")).forEach(inp => {
+        inp.addEventListener("focus", () => {
+          setTimeout(() => inp.select(), 10);
+        });
+        inp.addEventListener("input", () => {
+          if (lastPlan) calculatePlan();
+        });
+      });
+    }
+
     function calculatePlan() {
       showMainMessage("", "");
       els.planOutput.innerHTML = "";
@@ -850,20 +942,45 @@
       let saunaDurationEffective = s.saunaDuration;
       let relaxDurationEffective = s.relaxDuration;
       let saunaCount = 1;
+      let saunaDurations = [];
+      let relaxDurations = [];
 
       if (sauna) {
         saunaDurationEffective = toInt(els.saunaDurationInline.value, s.saunaDuration);
         relaxDurationEffective = toInt(els.relaxDurationInline.value, s.relaxDuration);
         saunaCount = toInt(els.saunaCountInline.value, 1);
         if (saunaCount < 1) saunaCount = 1;
+
+        const container = els.saunaSessionsContainer;
+        if (container && container.children.length && saunaCount > 1) {
+          for (let i = 1; i <= saunaCount; i++) {
+            const sdInput = document.getElementById("saunaDur_" + i);
+            const rdInput = document.getElementById("relaxDur_" + i);
+            saunaDurations.push(
+              sdInput ? toInt(sdInput.value, saunaDurationEffective) : saunaDurationEffective
+            );
+            relaxDurations.push(
+              rdInput ? toInt(rdInput.value, relaxDurationEffective) : relaxDurationEffective
+            );
+          }
+        } else {
+          for (let i = 0; i < saunaCount; i++) {
+            saunaDurations.push(saunaDurationEffective);
+            relaxDurations.push(relaxDurationEffective);
+          }
+        }
       }
 
       let fixAfter;
       if (sauna) {
-        const perSession = saunaDurationEffective + s.postSaunaShower + relaxDurationEffective;
+        let saunaRelaxSum = 0;
+        for (let i = 0; i < saunaCount; i++) {
+          saunaRelaxSum += saunaDurations[i] + relaxDurations[i];
+        }
         fixAfter =
           s.preSaunaShower +
-          saunaCount * perSession +
+          saunaRelaxSum +
+          saunaCount * s.postSaunaShower +
           s.showerAfter +
           s.changeAfter +
           s.driveBack;
@@ -901,7 +1018,9 @@
           ...s,
           saunaDurationEffective,
           relaxDurationEffective,
-          saunaCount
+          saunaCount,
+          saunaDurations,
+          relaxDurations
         }
       };
 
@@ -923,9 +1042,6 @@
 
       let cardioMinutes = cardio ? trainingTime - strengthMinutes : 0;
 
-      // Fälle:
-      // - Cardio deaktiviert -> nur Kraft
-      // - Kraft-Minuten <= 0 -> nur Cardio
       if (!cardio) {
         strengthMinutes = trainingTime;
         cardioMinutes = 0;
@@ -953,29 +1069,37 @@
       let t = start;
       const steps = [];
 
+      function addHeader(label) {
+        steps.push({ header: true, label });
+      }
+
       function add(label, groupKey) {
         steps.push({
           time: formatMinutesToTime(t),
-          label: label,
+          label,
           group: groupKey || null
         });
       }
 
-      // Abfahrt & Ankunft (Gruppe: Hinfahrt)
+      // Abfahrt & Ankunft
       add("Abfahrt", "drive-out");
       t += s.driveTo;
 
       add("Ankunft im Gym", "drive-out");
       t += s.changeBefore;
 
-      // Kraft (Gruppe: Kraft) – nur wenn > 0
+      if (trainingTime > 0) {
+        addHeader("Training");
+      }
+
+      // Kraft
       if (strengthMinutes > 0) {
         add("Beginn Kraft-Training", "strength");
         t += strengthMinutes;
         add("Ende Kraft-Training", "strength");
       }
 
-      // Cardio (Gruppe: Cardio) – nur wenn > 0
+      // Cardio
       if (cardioMinutes > 0) {
         add("Beginn Cardio-Training", "cardio");
         t += cardioMinutes;
@@ -984,58 +1108,62 @@
 
       // Sauna-Block
       if (sauna && s.saunaCount > 0) {
+        addHeader("Sauna");
+
         const count = s.saunaCount;
 
-        // Abduschen vor Sauna + Saunagang 1
+        // Gang 1 inkl. Abduschen davor
         add("Abduschen vor Sauna", "sauna-1");
         t += s.preSaunaShower;
 
         add("Beginn Saunagang 1", "sauna-1");
-        t += s.saunaDurationEffective;
+        t += s.saunaDurations[0] ?? s.saunaDurationEffective;
         add("Ende Saunagang 1", "sauna-1");
 
-        // Relax 1
         add("Abduschen nach Saunagang 1", "sauna-relax-1");
         t += s.postSaunaShower;
 
         add("Beginn Relax 1", "sauna-relax-1");
-        t += s.relaxDurationEffective;
+        t += s.relaxDurations[0] ?? s.relaxDurationEffective;
         add("Ende Relax 1", "sauna-relax-1");
 
         // Weitere Gänge (2..n)
         for (let i = 2; i <= count; i++) {
+          const idx = i - 1;
           const gSauna = "sauna-session-" + i;
           const gRelax = "sauna-relax-" + i;
 
           add("Beginn Saunagang " + i, gSauna);
-          t += s.saunaDurationEffective;
+          t += s.saunaDurations[idx] ?? s.saunaDurationEffective;
           add("Ende Saunagang " + i, gSauna);
 
           add("Abduschen nach Saunagang " + i, gRelax);
           t += s.postSaunaShower;
 
           add("Beginn Relax " + i, gRelax);
-          t += s.relaxDurationEffective;
+          t += s.relaxDurations[idx] ?? s.relaxDurationEffective;
           add("Ende Relax " + i, gRelax);
         }
       }
 
       // Abschluss
-      // Gruppe: Duschen + Umziehen nach Training
+      addHeader("Abschluss");
+
       add("Duschen nach Training", "finish-clean");
       t += s.showerAfter;
 
       add("Anziehen nach Training", "finish-clean");
       t += s.changeAfter;
 
-      // Gruppe: Heimfahrt + Zuhause
       add("Abfahrt nach Hause", "finish-home");
       t += s.driveBack;
 
       add("Zuhause", "finish-home");
 
       const saunaSummary = lastPlan.sauna
-        ? "Ja (" + lastPlan.settings.saunaCount + " Gang" + (lastPlan.settings.saunaCount > 1 ? "e" : "") + ")"
+        ? (s.saunaCount === 1
+            ? "Ja (1 Gang)"
+            : "Ja (" + s.saunaCount + " Gänge)")
         : "Nein";
 
       const summaryHtml =
@@ -1057,6 +1185,12 @@
       let prevGroup = null;
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
+
+        if (step.header) {
+          html += '<li class="timeline-header">' + step.label + '</li>';
+          continue;
+        }
+
         const isGroupStart = step.group && step.group !== prevGroup;
         const groupClass = isGroupStart ? " group-start" : "";
         prevGroup = step.group || prevGroup;
@@ -1096,13 +1230,16 @@
         els.saunaCountInline.value = 1;
       } else {
         els.saunaInlineRow.style.display = "none";
+        els.saunaSessionsContainer.style.display = "none";
+        els.saunaSessionsContainer.innerHTML = "";
       }
+      updateSaunaSessionsUI();
       if (lastPlan) {
         calculatePlan();
       }
     });
 
-    // Sauna/Relax/Count Inline: Inhalt beim Antippen komplett markieren
+    // Inline Sauna-Felder
     [els.saunaDurationInline, els.relaxDurationInline, els.saunaCountInline].forEach(function (input) {
       input.addEventListener("focus", function () {
         setTimeout(() => {
@@ -1110,6 +1247,7 @@
         }, 10);
       });
       input.addEventListener("input", function () {
+        updateSaunaSessionsUI();
         if (lastPlan) {
           calculatePlan();
         }
@@ -1172,6 +1310,7 @@
     setDefaultTimes();
     els.ratioInfo.textContent = "erst nach der ersten Berechnung sinnvoll nutzbar";
     els.saunaInlineRow.style.display = els.saunaEnabled.checked ? "flex" : "none";
+    updateSaunaSessionsUI();
   </script>
 </body>
 </html>
