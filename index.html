@@ -103,7 +103,6 @@
     }
 
     input[type="time"],
-    input[type="number"],
     input[type="text"] {
       width: 100%;
       border-radius: var(--radius-md);
@@ -124,15 +123,30 @@
       text-align: center;
     }
 
-    input[type="number"],
     input[type="text"] {
       padding: 6px 10px;
       height: 36px;
     }
 
     input[type="time"]:focus,
-    input[type="number"]:focus,
     input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-soft);
+    }
+
+    select {
+      width: 100%;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--bg-card-alt);
+      color: var(--text);
+      font-size: 0.9rem;
+      padding: 6px 10px;
+      height: 36px;
+      outline: none;
+    }
+
+    select:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 1px var(--accent-soft);
     }
@@ -598,7 +612,7 @@
       <!-- Trainingszeit gesamt (nur Reverse-Modus relevant) -->
       <div id="trainTotalRow" style="display:none; margin-top:8px;">
         <label for="trainTotal" class="center-label">Trainingszeit gesamt (min)</label>
-        <input type="number" id="trainTotal" min="0" inputmode="numeric" class="inline-input">
+        <select id="trainTotal" class="inline-input"></select>
       </div>
 
       <!-- Sauna-Block -->
@@ -613,15 +627,15 @@
       <div class="sauna-inline-row" id="saunaInlineRow">
         <div class="flex-1">
           <label for="saunaDurationInline" class="center-label">Sauna (min)</label>
-          <input type="number" id="saunaDurationInline" min="0" max="999" inputmode="numeric" class="inline-input">
+          <select id="saunaDurationInline" class="inline-input"></select>
         </div>
         <div class="flex-1">
           <label for="relaxDurationInline" class="center-label">Relax (min)</label>
-          <input type="number" id="relaxDurationInline" min="0" max="999" inputmode="numeric" class="inline-input">
+          <select id="relaxDurationInline" class="inline-input"></select>
         </div>
         <div class="flex-1">
           <label for="saunaCountInline" class="center-label">Gänge</label>
-          <input type="number" id="saunaCountInline" min="1" max="5" inputmode="numeric" class="inline-input">
+          <select id="saunaCountInline" class="inline-input"></select>
         </div>
       </div>
 
@@ -675,11 +689,11 @@
             <div class="settings-group-title">Fahrten</div>
             <div class="settings-field">
               <label for="driveTo">Fahrt ins Gym (min)</label>
-              <input type="number" id="driveTo" min="0" inputmode="numeric">
+              <select id="driveTo"></select>
             </div>
             <div class="settings-field">
               <label for="driveBack">Heimfahrt (min)</label>
-              <input type="number" id="driveBack" min="0" inputmode="numeric">
+              <select id="driveBack"></select>
             </div>
           </div>
 
@@ -687,11 +701,11 @@
             <div class="settings-group-title">Kleidungswechsel</div>
             <div class="settings-field">
               <label for="changeBefore">Umziehen vor Training (min)</label>
-              <input type="number" id="changeBefore" min="0" inputmode="numeric">
+              <select id="changeBefore"></select>
             </div>
             <div class="settings-field">
               <label for="changeAfter">Umziehen nach Training (min)</label>
-              <input type="number" id="changeAfter" min="0" inputmode="numeric">
+              <select id="changeAfter"></select>
             </div>
           </div>
 
@@ -699,7 +713,7 @@
             <div class="settings-group-title">Training</div>
             <div class="settings-field">
               <label for="breakBetween">Pause zwischen Kraft und Cardio (min)</label>
-              <input type="number" id="breakBetween" min="0" inputmode="numeric">
+              <select id="breakBetween"></select>
             </div>
           </div>
 
@@ -707,11 +721,11 @@
             <div class="settings-group-title">Saunagang</div>
             <div class="settings-field">
               <label for="saunaDuration">Dauer Saunagang (Standard, min)</label>
-              <input type="number" id="saunaDuration" min="0" inputmode="numeric">
+              <select id="saunaDuration"></select>
             </div>
             <div class="settings-field">
               <label for="relaxDuration">Relax (Standard, min)</label>
-              <input type="number" id="relaxDuration" min="0" inputmode="numeric">
+              <select id="relaxDuration"></select>
             </div>
           </div>
 
@@ -719,15 +733,15 @@
             <div class="settings-group-title">Duschgänge</div>
             <div class="settings-field">
               <label for="preSaunaShower">Abduschen vor Sauna (min)</label>
-              <input type="number" id="preSaunaShower" min="0" inputmode="numeric">
+              <select id="preSaunaShower"></select>
             </div>
             <div class="settings-field">
               <label for="postSaunaShower">Abduschen nach Saunagang (min)</label>
-              <input type="number" id="postSaunaShower" min="0" inputmode="numeric">
+              <select id="postSaunaShower"></select>
             </div>
             <div class="settings-field">
               <label for="showerAfter">Duschen nach Training (und Sauna) (min)</label>
-              <input type="number" id="showerAfter" min="0" inputmode="numeric">
+              <select id="showerAfter"></select>
             </div>
           </div>
         </div>
@@ -844,6 +858,51 @@
       return hh + ":" + mm;
     }
 
+    // Picker-Helfer
+    function populateMinuteSelect(select, max) {
+      if (!select) return;
+      select.innerHTML = "";
+      for (let i = 0; i <= max; i++) {
+        const opt = document.createElement("option");
+        opt.value = String(i);
+        opt.textContent = i + " min";
+        select.appendChild(opt);
+      }
+    }
+
+    function populateCountSelect(select, min, max) {
+      if (!select) return;
+      select.innerHTML = "";
+      for (let i = min; i <= max; i++) {
+        const opt = document.createElement("option");
+        opt.value = String(i);
+        opt.textContent = String(i);
+        select.appendChild(opt);
+      }
+    }
+
+    function initMinuteSelects() {
+      // Settings
+      populateMinuteSelect(els.driveTo, 180);
+      populateMinuteSelect(els.driveBack, 180);
+      populateMinuteSelect(els.changeBefore, 60);
+      populateMinuteSelect(els.changeAfter, 60);
+      populateMinuteSelect(els.breakBetween, 60);
+      populateMinuteSelect(els.saunaDuration, 180);
+      populateMinuteSelect(els.relaxDuration, 180);
+      populateMinuteSelect(els.preSaunaShower, 60);
+      populateMinuteSelect(els.postSaunaShower, 60);
+      populateMinuteSelect(els.showerAfter, 60);
+
+      // Inline Sauna
+      populateMinuteSelect(els.saunaDurationInline, 180);
+      populateMinuteSelect(els.relaxDurationInline, 180);
+      populateCountSelect(els.saunaCountInline, 1, 5);
+
+      // Trainingszeit gesamt (Reverse-Modus)
+      populateMinuteSelect(els.trainTotal, 240);
+    }
+
     function loadSettings() {
       try {
         const stored = localStorage.getItem(SETTINGS_KEY);
@@ -879,16 +938,16 @@
     }
 
     function applySettingsToInputs() {
-      els.driveTo.value = currentSettings.driveTo;
-      els.driveBack.value = currentSettings.driveBack;
-      els.changeBefore.value = currentSettings.changeBefore;
-      els.preSaunaShower.value = currentSettings.preSaunaShower;
-      els.saunaDuration.value = currentSettings.saunaDuration;
-      els.postSaunaShower.value = currentSettings.postSaunaShower;
-      els.relaxDuration.value = currentSettings.relaxDuration;
-      els.showerAfter.value = currentSettings.showerAfter;
-      els.changeAfter.value = currentSettings.changeAfter;
-      els.breakBetween.value = currentSettings.breakBetween;
+      els.driveTo.value = String(currentSettings.driveTo);
+      els.driveBack.value = String(currentSettings.driveBack);
+      els.changeBefore.value = String(currentSettings.changeBefore);
+      els.preSaunaShower.value = String(currentSettings.preSaunaShower);
+      els.saunaDuration.value = String(currentSettings.saunaDuration);
+      els.postSaunaShower.value = String(currentSettings.postSaunaShower);
+      els.relaxDuration.value = String(currentSettings.relaxDuration);
+      els.showerAfter.value = String(currentSettings.showerAfter);
+      els.changeAfter.value = String(currentSettings.changeAfter);
+      els.breakBetween.value = String(currentSettings.breakBetween);
     }
 
     function resetDefaults() {
@@ -960,7 +1019,7 @@
       let count = toInt(els.saunaCountInline.value, 1);
       if (count < 1) count = 1;
       if (count > 5) count = 5;
-      els.saunaCountInline.value = count;
+      els.saunaCountInline.value = String(count);
 
       if (count <= 1) {
         container.style.display = "none";
@@ -977,23 +1036,30 @@
           '<div class="sauna-session-row">' +
             '<span class="sauna-session-label">Gang ' + i + ':</span>' +
             '<span>Sauna</span>' +
-            '<input type="number" class="inline-input" id="saunaDur_' + i + '" min="0" max="999" inputmode="numeric" value="' + baseSauna + '">' +
+            '<select class="inline-input" id="saunaDur_' + i + '"></select>' +
             '<span>Relax</span>' +
-            '<input type="number" class="inline-input" id="relaxDur_' + i + '" min="0" max="999" inputmode="numeric" value="' + baseRelax + '">' +
+            '<select class="inline-input" id="relaxDur_' + i + '"></select>' +
           '</div>';
       }
 
       container.innerHTML = html;
       container.style.display = "flex";
 
-      Array.from(container.querySelectorAll("input")).forEach(inp => {
-        inp.addEventListener("focus", () => {
-          setTimeout(() => inp.select(), 10);
+      for (let i = 1; i <= count; i++) {
+        const sd = document.getElementById("saunaDur_" + i);
+        const rd = document.getElementById("relaxDur_" + i);
+        populateMinuteSelect(sd, 180);
+        populateMinuteSelect(rd, 180);
+
+        sd.value = String(baseSauna);
+        rd.value = String(baseRelax);
+
+        [sd, rd].forEach(inp => {
+          inp.addEventListener("input", () => {
+            if (lastPlan) calculatePlan();
+          });
         });
-        inp.addEventListener("input", () => {
-          if (lastPlan) calculatePlan();
-        });
-      });
+      }
     }
 
     function clearSaunaValidation() {
@@ -1049,7 +1115,7 @@
         saunaCount = toInt(els.saunaCountInline.value, 1);
         if (saunaCount < 1) saunaCount = 1;
         if (saunaCount > 5) saunaCount = 5;
-        els.saunaCountInline.value = saunaCount;
+        els.saunaCountInline.value = String(saunaCount);
 
         const container = els.saunaSessionsContainer;
         if (container && container.children.length && saunaCount > 1) {
@@ -1213,7 +1279,7 @@
         saunaCount = toInt(els.saunaCountInline.value, 1);
         if (saunaCount < 1) saunaCount = 1;
         if (saunaCount > 5) saunaCount = 5;
-        els.saunaCountInline.value = saunaCount;
+        els.saunaCountInline.value = String(saunaCount);
 
         const container = els.saunaSessionsContainer;
         if (container && container.children.length && saunaCount > 1) {
@@ -1253,7 +1319,7 @@
         if (strengthRaw > trainingTotal) strengthRaw = trainingTotal;
 
         els.ratioSlider.min = 0;
-        els.ratioSlider.max = trainingTotal;
+        els.ratioSlider.max = trainingTotal || 1;
         els.ratioSlider.step = 1;
         els.ratioSlider.value = strengthRaw;
 
@@ -1540,22 +1606,22 @@
             els.ratioInfo.textContent = "Keine Trainingszeit geplant.";
           }
         } else {
-          let trainTotal = lastPlan.trainTotal || 0;
-          if (trainTotal < 0) trainTotal = 0;
+          let tt = lastPlan.trainTotal || 0;
+          if (tt < 0) tt = 0;
 
           els.ratioSlider.min = 0;
-          els.ratioSlider.max = trainTotal || 1;
+          els.ratioSlider.max = tt || 1;
           els.ratioSlider.step = 1;
 
           let strengthRaw = parseInt(els.ratioSlider.value, 10);
-          if (!Number.isFinite(strengthRaw)) strengthRaw = Math.floor(trainTotal / 2);
+          if (!Number.isFinite(strengthRaw)) strengthRaw = Math.floor(tt / 2);
           if (strengthRaw < 0) strengthRaw = 0;
-          if (strengthRaw > trainTotal) strengthRaw = trainTotal;
+          if (strengthRaw > tt) strengthRaw = tt;
           els.ratioSlider.value = strengthRaw;
 
           strengthMinutes = strengthRaw;
-          cardioMinutes = trainTotal - strengthRaw;
-          trainingTimeSegments = trainTotal;
+          cardioMinutes = tt - strengthRaw;
+          trainingTimeSegments = tt;
 
           if (strengthMinutes > 0 && cardioMinutes > 0) {
             breakBetween = s.breakBetween || 0;
@@ -1855,7 +1921,7 @@
     function recalcSaunaOnlySuggestion() {
       if (!els.saunaEnabled.checked || !els.saunaOnly.checked) return;
       if (els.reverseEnabled.checked) {
-        // Im Reverse-Modus gibt es kein fixiertes Zeitfenster, daher keine Budgetprüfung
+        // Im Reverse-Modus kein fixes Zeitfenster -> keine Budgetprüfung
         els.saunaValidation.textContent = "";
         return;
       }
@@ -1895,7 +1961,7 @@
 
       const maxGangs = Math.min(maxGangsMath, 5);
       const suggested = maxGangs;
-      els.saunaCountInline.value = suggested;
+      els.saunaCountInline.value = String(suggested);
       updateSaunaSessionsUI();
       els.saunaValidation.textContent =
         "Sauna only: Mit deinen Einstellungen sind maximal " + maxGangsMath + " Saunagänge möglich (bis zu 5 einplanbar).";
@@ -1906,9 +1972,9 @@
 
       if (els.saunaEnabled.checked) {
         els.saunaInlineRow.style.display = "flex";
-        els.saunaDurationInline.value = currentSettings.saunaDuration;
-        els.relaxDurationInline.value = currentSettings.relaxDuration;
-        els.saunaCountInline.value = 1;
+        els.saunaDurationInline.value = String(currentSettings.saunaDuration);
+        els.relaxDurationInline.value = String(currentSettings.relaxDuration);
+        els.saunaCountInline.value = "1";
         els.saunaOnlyBlock.style.display = "flex";
       } else {
         els.saunaInlineRow.style.display = "none";
@@ -1952,11 +2018,6 @@
     });
 
     [els.saunaDurationInline, els.relaxDurationInline, els.saunaCountInline].forEach(function (input) {
-      input.addEventListener("focus", function () {
-        setTimeout(() => {
-          input.select();
-        }, 10);
-      });
       input.addEventListener("input", function () {
         updateSaunaSessionsUI();
         if (lastPlan) {
@@ -2005,27 +2066,6 @@
       }
     });
 
-    const numericSettingInputs = [
-      els.driveTo,
-      els.driveBack,
-      els.changeBefore,
-      els.changeAfter,
-      els.saunaDuration,
-      els.relaxDuration,
-      els.preSaunaShower,
-      els.postSaunaShower,
-      els.showerAfter,
-      els.breakBetween
-    ];
-
-    numericSettingInputs.forEach(function (input) {
-      input.addEventListener("focus", function () {
-        setTimeout(() => {
-          input.select();
-        }, 10);
-      });
-    });
-
     // Reverse-Modus Toggle
     els.reverseEnabled.addEventListener("change", function () {
       const active = els.reverseEnabled.checked;
@@ -2040,7 +2080,7 @@
         } else if (lastPlan && lastPlan.mode === "reverse") {
           initialTrain = lastPlan.trainTotal || 90;
         }
-        els.trainTotal.value = initialTrain;
+        els.trainTotal.value = String(initialTrain);
 
         // Slider auf 0..TrainTotal
         els.ratioSlider.min = 0;
@@ -2108,6 +2148,7 @@
     });
 
     // Init
+    initMinuteSelects();
     loadSettings();
     setDefaultTimes();
     els.ratioInfo.textContent = "erst nach der ersten Berechnung sinnvoll nutzbar";
