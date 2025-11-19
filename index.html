@@ -67,7 +67,6 @@
       font-weight: 600;
     }
 
-    /* Zentrierte Titel nur für Zeitfenster & Zeitplan */
     #timeSection .card-header,
     #planSection .card-header {
       justify-content: center;
@@ -99,7 +98,6 @@
       text-align: center;
     }
 
-    /* Basis-Inputs */
     input[type="time"],
     input[type="number"],
     input[type="text"] {
@@ -113,7 +111,6 @@
       display: block;
     }
 
-    /* Time: native Control, aber visuell wie die anderen */
     input[type="time"] {
       -webkit-appearance: none;
       appearance: none;
@@ -123,7 +120,6 @@
       text-align: center;
     }
 
-    /* Number/Text */
     input[type="number"],
     input[type="text"] {
       padding: 6px 10px;
@@ -244,6 +240,26 @@
       transform: none;
       box-shadow: none;
       background: rgba(255, 255, 255, 0.04);
+    }
+
+    .copy-container {
+      text-align: center;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .copy-button {
+      width: auto;
+      padding: 8px 18px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, var(--accent), #2ba57a);
+      color: #020202;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6);
     }
 
     .settings-toggle {
@@ -457,7 +473,6 @@
       font-weight: 500;
     }
 
-    /* Toast / Bubble Overlay */
     .toast-overlay {
       position: fixed;
       inset: 0;
@@ -499,6 +514,11 @@
       justify-content: center;
       font-size: 0.8rem;
       color: var(--accent);
+    }
+
+    #saunaValidation {
+      font-size: 0.75rem;
+      text-align: center;
     }
 
     @media (max-width: 380px) {
@@ -575,15 +595,15 @@
       <div class="sauna-inline-row" id="saunaInlineRow">
         <div class="flex-1">
           <label for="saunaDurationInline" class="center-label">Sauna (min)</label>
-          <input type="number" id="saunaDurationInline" min="0" inputmode="numeric" class="inline-input">
+          <input type="number" id="saunaDurationInline" min="0" max="999" inputmode="numeric" class="inline-input">
         </div>
         <div class="flex-1">
           <label for="relaxDurationInline" class="center-label">Relax (min)</label>
-          <input type="number" id="relaxDurationInline" min="0" inputmode="numeric" class="inline-input">
+          <input type="number" id="relaxDurationInline" min="0" max="999" inputmode="numeric" class="inline-input">
         </div>
         <div class="flex-1">
           <label for="saunaCountInline" class="center-label">Gänge</label>
-          <input type="number" id="saunaCountInline" min="1" inputmode="numeric" class="inline-input">
+          <input type="number" id="saunaCountInline" min="1" max="5" inputmode="numeric" class="inline-input">
         </div>
       </div>
 
@@ -594,6 +614,8 @@
           <span>Sauna only</span>
         </label>
       </div>
+
+      <div id="saunaValidation" class="message error"></div>
 
       <div class="sauna-sessions" id="saunaSessionsContainer"></div>
 
@@ -609,6 +631,11 @@
 
       <div id="planOutput" class="output-card">
         <div class="message info">Noch kein Plan berechnet. Starte oben mit Abfahrt & Zuhause-Zeit.</div>
+      </div>
+
+      <div id="copyContainer" class="copy-container">
+        <button id="copyButton" type="button" class="copy-button">Kopieren</button>
+        <div id="copyMessage" class="message"></div>
       </div>
     </section>
 
@@ -735,6 +762,7 @@
       relaxDurationInline: document.getElementById("relaxDurationInline"),
       saunaCountInline: document.getElementById("saunaCountInline"),
       saunaSessionsContainer: document.getElementById("saunaSessionsContainer"),
+      saunaValidation: document.getElementById("saunaValidation"),
       ratioRow: document.getElementById("ratioRow"),
       ratioSlider: document.getElementById("ratioSlider"),
       ratioInfo: document.getElementById("ratioInfo"),
@@ -755,7 +783,10 @@
       changeAfter: document.getElementById("changeAfter"),
       breakBetween: document.getElementById("breakBetween"),
       saveSettings: document.getElementById("saveSettings"),
-      resetDefaults: document.getElementById("resetDefaults")
+      resetDefaults: document.getElementById("resetDefaults"),
+      copyContainer: document.getElementById("copyContainer"),
+      copyButton: document.getElementById("copyButton"),
+      copyMessage: document.getElementById("copyMessage")
     };
 
     const toastOverlay = document.getElementById("toastOverlay");
@@ -765,6 +796,7 @@
 
     let currentSettings = { ...defaultSettings };
     let lastPlan = null;
+    let lastCopyText = "";
 
     function toInt(value, fallback) {
       const n = parseInt(value, 10);
@@ -904,7 +936,11 @@
         return;
       }
 
-      const count = toInt(els.saunaCountInline.value, 1);
+      let count = toInt(els.saunaCountInline.value, 1);
+      if (count < 1) count = 1;
+      if (count > 5) count = 5;
+      els.saunaCountInline.value = count;
+
       if (count <= 1) {
         container.style.display = "none";
         container.innerHTML = "";
@@ -920,9 +956,9 @@
           '<div class="sauna-session-row">' +
             '<span class="sauna-session-label">Gang ' + i + ':</span>' +
             '<span>Sauna</span>' +
-            '<input type="number" class="inline-input" id="saunaDur_' + i + '" min="0" inputmode="numeric" value="' + baseSauna + '">' +
+            '<input type="number" class="inline-input" id="saunaDur_' + i + '" min="0" max="999" inputmode="numeric" value="' + baseSauna + '">' +
             '<span>Relax</span>' +
-            '<input type="number" class="inline-input" id="relaxDur_' + i + '" min="0" inputmode="numeric" value="' + baseRelax + '">' +
+            '<input type="number" class="inline-input" id="relaxDur_' + i + '" min="0" max="999" inputmode="numeric" value="' + baseRelax + '">' +
           '</div>';
       }
 
@@ -939,9 +975,17 @@
       });
     }
 
+    function clearSaunaValidation() {
+      els.saunaValidation.textContent = "";
+    }
+
     function calculatePlan() {
       showMainMessage("", "");
+      clearSaunaValidation();
       els.planOutput.innerHTML = "";
+      els.copyContainer.style.display = "none";
+      els.copyMessage.textContent = "";
+      lastCopyText = "";
 
       const start = parseTimeToMinutes(els.startTime.value);
       const end = parseTimeToMinutes(els.endTime.value);
@@ -975,6 +1019,8 @@
         relaxDurationEffective = toInt(els.relaxDurationInline.value, s.relaxDuration);
         saunaCount = toInt(els.saunaCountInline.value, 1);
         if (saunaCount < 1) saunaCount = 1;
+        if (saunaCount > 5) saunaCount = 5;
+        els.saunaCountInline.value = saunaCount;
 
         const container = els.saunaSessionsContainer;
         if (container && container.children.length && saunaCount > 1) {
@@ -1011,13 +1057,16 @@
           return;
         }
 
-        // gesamte Sauna-Zeit inkl. Duschen vor/nach Gängen
         let saunaTotalWithShowers = s.preSaunaShower;
         for (let i = 0; i < saunaCount; i++) {
           saunaTotalWithShowers += saunaDurations[i] + s.postSaunaShower + relaxDurations[i];
         }
 
-        if (saunaTotalWithShowers > saunaBudget) {
+        const diff = saunaTotalWithShowers - saunaBudget;
+
+        if (diff > 0) {
+          els.saunaValidation.textContent =
+            "Deine Sauna-Planung überschreitet dein Zeitfenster um " + diff + " min. Du müsstest entsprechend länger im Gym einplanen.";
           showMainMessage(
             "Mit den aktuellen Sauna-Einstellungen passt du nicht in dein Zeitfenster.",
             "error"
@@ -1025,6 +1074,10 @@
           els.planOutput.innerHTML =
             '<div class="message error">Reduziere Dauer oder Anzahl der Saunagänge.</div>';
           return;
+        } else if (diff < 0) {
+          const remaining = Math.abs(diff);
+          els.saunaValidation.textContent =
+            "Es wären noch " + remaining + " min für zusätzliche Sauna- oder Relax-Zeit verfügbar.";
         }
 
         lastPlan = {
@@ -1106,6 +1159,39 @@
       renderPlan();
     }
 
+    function buildCopyTextFromSteps(steps) {
+      const lines = [];
+      const sectionAdded = {
+        Start: false,
+        Training: false,
+        Sauna: false,
+        Abschluss: false
+      };
+      let currentSection = "Start";
+
+      // Start-Header immer
+      lines.push("# Start");
+      sectionAdded.Start = true;
+
+      for (const step of steps) {
+        if (step.header) {
+          const label = step.label;
+          if (label === "Training" || label === "Sauna" || label === "Abschluss") {
+            currentSection = label;
+            if (!sectionAdded[label]) {
+              lines.push("");
+              lines.push("# " + label);
+              sectionAdded[label] = true;
+            }
+          }
+        } else {
+          lines.push(step.time + " " + step.label);
+        }
+      }
+
+      return lines.join("\n");
+    }
+
     function renderPlan() {
       if (!lastPlan) return;
 
@@ -1117,7 +1203,7 @@
     }
 
     function renderSaunaOnlyPlan() {
-      const { start, saunaBudget, settings: s } = lastPlan;
+      const { start, settings: s } = lastPlan;
 
       let t = start;
       const steps = [];
@@ -1134,7 +1220,7 @@
         });
       }
 
-      // Hinfahrt + Umziehen
+      // Start: Hinfahrt + Umziehen
       add("Abfahrt", "drive-out");
       t += s.driveTo;
 
@@ -1231,6 +1317,9 @@
       html += "</ul></div>";
 
       els.planOutput.innerHTML = html;
+
+      lastCopyText = buildCopyTextFromSteps(steps);
+      els.copyContainer.style.display = "block";
     }
 
     function renderTrainingSaunaPlan() {
@@ -1312,7 +1401,7 @@
         });
       }
 
-      // Hinfahrt
+      // Start
       add("Abfahrt", "drive-out");
       t += s.driveTo;
 
@@ -1406,7 +1495,6 @@
 
       const saunaSummaryActive = sauna && s.saunaCount > 0;
 
-      // Sauna-Gesamtzeit (Sauna + Relax)
       let saunaTotal = 0;
       if (saunaSummaryActive) {
         for (let i = 0; i < s.saunaCount; i++) {
@@ -1462,6 +1550,9 @@
       html += "</ul></div>";
 
       els.planOutput.innerHTML = html;
+
+      lastCopyText = buildCopyTextFromSteps(steps);
+      els.copyContainer.style.display = "block";
     }
 
     // Events
@@ -1476,8 +1567,6 @@
 
     els.cardioEnabled.addEventListener("change", function () {
       if (els.saunaOnly.checked) {
-        // In Sauna-only Modus sollte Cardio eigentlich nicht erreichbar sein,
-        // aber falls doch: nichts tun.
         return;
       }
 
@@ -1514,7 +1603,7 @@
 
       const saunaBudget = total - (fixBefore + fixAfter);
       if (saunaBudget <= 0) {
-        showMainMessage("Zeitfenster zu knapp für Sauna only.", "error");
+        els.saunaValidation.textContent = "Zeitfenster zu knapp für Sauna only.";
         return;
       }
 
@@ -1524,26 +1613,27 @@
 
       const usable = saunaBudget - s.preSaunaShower;
       if (usable <= 0 || timePerGang <= 0) {
-        showMainMessage("Zeitfenster reicht nicht für einen Saunagang.", "error");
+        els.saunaValidation.textContent = "Zeitfenster reicht nicht für einen Saunagang.";
         return;
       }
 
-      const maxGangs = Math.floor(usable / timePerGang);
-      if (maxGangs <= 0) {
-        showMainMessage("Zeitfenster reicht nicht für einen Saunagang.", "error");
+      const maxGangsMath = Math.floor(usable / timePerGang);
+      if (maxGangsMath <= 0) {
+        els.saunaValidation.textContent = "Zeitfenster reicht nicht für einen Saunagang.";
         return;
       }
 
-      const suggested = Math.min(2, maxGangs);
+      const maxGangs = Math.min(maxGangsMath, 5);
+      const suggested = maxGangs;
       els.saunaCountInline.value = suggested;
       updateSaunaSessionsUI();
-      showMainMessage(
-        "Sauna only: Maximal " + maxGangs + " Saunagänge mit deinen Standardwerten möglich.",
-        "info"
-      );
+      els.saunaValidation.textContent =
+        "Sauna only: Mit deinen Einstellungen sind maximal " + maxGangsMath + " Saunagänge möglich (bis zu 5 einplanbar).";
     }
 
     els.saunaEnabled.addEventListener("change", function () {
+      clearSaunaValidation();
+
       if (els.saunaEnabled.checked) {
         els.saunaInlineRow.style.display = "flex";
         els.saunaDurationInline.value = currentSettings.saunaDuration;
@@ -1557,7 +1647,6 @@
         els.saunaOnly.checked = false;
         els.saunaOnlyBlock.style.display = "none";
 
-        // Cardio + Regler wieder normal anzeigen
         els.cardioBlock.style.display = "flex";
         if (els.cardioEnabled.checked) {
           els.ratioRow.style.display = "block";
@@ -1570,15 +1659,15 @@
     });
 
     els.saunaOnly.addEventListener("change", function () {
+      clearSaunaValidation();
+
       if (els.saunaOnly.checked) {
-        // Cardio aus + verstecken
         els.cardioEnabled.checked = false;
         els.cardioBlock.style.display = "none";
         els.ratioRow.style.display = "none";
         showMainMessage("Sauna only Modus aktiv.", "info");
         recalcSaunaOnlySuggestion();
       } else {
-        // Cardio-Block zurückholen, Slider je nach Checkbox
         els.cardioBlock.style.display = "flex";
         if (els.cardioEnabled.checked) {
           els.ratioRow.style.display = "block";
@@ -1592,7 +1681,6 @@
       }
     });
 
-    // Inline Sauna-Felder
     [els.saunaDurationInline, els.relaxDurationInline, els.saunaCountInline].forEach(function (input) {
       input.addEventListener("focus", function () {
         setTimeout(() => {
@@ -1623,7 +1711,6 @@
     els.saveSettings.addEventListener("click", function () {
       saveSettings();
       showToast("Einstellungen gespeichert.", function () {
-        // Einstellungen zuklappen
         els.settingsBody.style.display = "none";
         els.settingsToggleIcon.textContent = "+";
         const span = els.settingsToggle.querySelector("span");
@@ -1643,10 +1730,11 @@
         lastPlan = null;
         els.planOutput.innerHTML =
           '<div class="message info">Standardwerte geladen. Bitte Plan erneut berechnen.</div>';
+        els.copyContainer.style.display = "none";
+        lastCopyText = "";
       }
     });
 
-    // Inhalt beim Antippen in Einstellungsfeldern markieren
     const numericSettingInputs = [
       els.driveTo,
       els.driveBack,
@@ -1668,6 +1756,36 @@
       });
     });
 
+    // Copy-Button
+    els.copyButton.addEventListener("click", async function () {
+      els.copyMessage.textContent = "";
+      if (!lastCopyText) {
+        els.copyMessage.textContent = "Kein Zeitplan zum Kopieren.";
+        els.copyMessage.className = "message error";
+        return;
+      }
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(lastCopyText);
+        } else {
+          const textarea = document.createElement("textarea");
+          textarea.value = lastCopyText;
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand("copy");
+          document.body.removeChild(textarea);
+        }
+        els.copyMessage.textContent = "Zeitplan in die Zwischenablage kopiert.";
+        els.copyMessage.className = "message info";
+      } catch (e) {
+        console.warn("Konnte nicht kopieren:", e);
+        els.copyMessage.textContent = "Kopieren nicht möglich.";
+        els.copyMessage.className = "message error";
+      }
+    });
+
     // Init
     loadSettings();
     setDefaultTimes();
@@ -1676,6 +1794,10 @@
     els.saunaOnlyBlock.style.display = els.saunaEnabled.checked ? "flex" : "none";
     els.ratioRow.style.display = els.cardioEnabled.checked ? "block" : "none";
     updateSaunaSessionsUI();
+
+    // Start-Setup: 75 min Kraft / 30 min Cardio (bei Standard-Settings)
+    els.ratioSlider.value = 80; // sorgt bei den Default-Zeiten für 75/30
+    calculatePlan();
   </script>
 </body>
 </html>
