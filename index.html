@@ -43,6 +43,7 @@
       margin: 0 0 10px;
       font-weight: 650;
       letter-spacing: 0.02em;
+      text-align: center;
     }
 
     .card {
@@ -66,6 +67,18 @@
       font-weight: 600;
     }
 
+    /* Zentrierte Titel nur für Zeitfenster & Zeitplan */
+    #timeSection .card-header,
+    #planSection .card-header {
+      justify-content: center;
+    }
+
+    #timeSection .card-title,
+    #planSection .card-title {
+      text-align: center;
+      width: 100%;
+    }
+
     .flex-row {
       display: flex;
       gap: 10px;
@@ -80,6 +93,10 @@
       font-size: 0.8rem;
       margin-bottom: 4px;
       color: var(--text-muted);
+    }
+
+    .center-label {
+      text-align: center;
     }
 
     input[type="time"],
@@ -104,6 +121,9 @@
 
     .time-input {
       max-width: 140px;
+      margin: 0 auto;
+      display: block;
+      text-align: center;
     }
 
     .checkbox-row {
@@ -205,10 +225,21 @@
       display: none;
     }
 
-    .settings-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    .settings-groups {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .settings-group-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #dddddd;
+      margin-bottom: 4px;
+    }
+
+    .settings-field {
+      margin-bottom: 6px;
     }
 
     .settings-footer {
@@ -231,12 +262,18 @@
 
     .ratio-label {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+      align-items: center;
       font-size: 0.8rem;
       color: var(--text-muted);
       margin-bottom: 6px;
-      gap: 8px;
-      flex-wrap: wrap;
+      gap: 4px;
+      text-align: center;
+    }
+
+    .accent-text {
+      color: var(--accent);
+      font-weight: 500;
     }
 
     input[type="range"] {
@@ -307,45 +344,13 @@
       gap: 8px;
       padding: 4px 0;
       border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
-      border-left: 3px solid transparent;
+      border-left: 3px solid rgba(255, 255, 255, 0.16);
       padding-left: 8px;
       transition: margin-top 0.1s ease, padding-top 0.1s ease;
     }
 
     .timeline-item:last-child {
       border-bottom: none;
-    }
-
-    .timeline-item.cat-drive {
-      border-left-color: #4aa3ff;
-    }
-
-    .timeline-item.cat-strength {
-      border-left-color: #ffb347;
-    }
-
-    .timeline-item.cat-cardio {
-      border-left-color: #ff6b6b;
-    }
-
-    .timeline-item.cat-sauna {
-      border-left-color: #f3a1ff;
-    }
-
-    .timeline-item.cat-relax {
-      border-left-color: #9be7ff;
-    }
-
-    .timeline-item.cat-shower {
-      border-left-color: #6dd5ff;
-    }
-
-    .timeline-item.cat-change {
-      border-left-color: #cfd36d;
-    }
-
-    .timeline-item.cat-home {
-      border-left-color: #3dd8a3;
     }
 
     .timeline-item.group-start {
@@ -391,9 +396,6 @@
       .flex-row {
         flex-direction: column;
       }
-      .settings-grid {
-        grid-template-columns: 1fr;
-      }
       .sauna-inline-row {
         flex-direction: column;
       }
@@ -410,18 +412,18 @@
     </header>
 
     <!-- Haupt-Eingaben -->
-    <section class="card">
+    <section class="card" id="timeSection">
       <div class="card-header">
         <div class="card-title">Zeitfenster</div>
       </div>
 
       <div class="flex-row">
         <div class="flex-1">
-          <label for="startTime">Abfahrt</label>
+          <label for="startTime" class="center-label">Abfahrt</label>
           <input type="time" id="startTime" class="time-input" required>
         </div>
         <div class="flex-1">
-          <label for="endTime">Zuhause</label>
+          <label for="endTime" class="center-label">Zuhause</label>
           <input type="time" id="endTime" class="time-input" required>
         </div>
       </div>
@@ -463,9 +465,9 @@
     </section>
 
     <!-- Ausgabe -->
-    <section class="card">
+    <section class="card" id="planSection">
       <div class="card-header">
-        <div class="card-title">Dein Zeitplan</div>
+        <div class="card-title">Zeitplan</div>
       </div>
 
       <div id="planOutput" class="output-card">
@@ -486,44 +488,60 @@
       </div>
 
       <div class="settings-body" id="settingsBody">
-        <div class="settings-grid">
-          <div>
-            <label for="driveTo">Fahrt ins Gym (min)</label>
-            <input type="number" id="driveTo" min="0">
+        <div class="settings-groups">
+          <div class="settings-group">
+            <div class="settings-group-title">Fahrten</div>
+            <div class="settings-field">
+              <label for="driveTo">Fahrt ins Gym (min)</label>
+              <input type="number" id="driveTo" min="0" inputmode="numeric">
+            </div>
+            <div class="settings-field">
+              <label for="driveBack">Heimfahrt (min)</label>
+              <input type="number" id="driveBack" min="0" inputmode="numeric">
+            </div>
           </div>
-          <div>
-            <label for="driveBack">Heimfahrt (min)</label>
-            <input type="number" id="driveBack" min="0">
+
+          <div class="settings-group">
+            <div class="settings-group-title">Kleidungswechsel</div>
+            <div class="settings-field">
+              <label for="changeBefore">Umziehen vor Training (min)</label>
+              <input type="number" id="changeBefore" min="0" inputmode="numeric">
+            </div>
+            <div class="settings-field">
+              <label for="changeAfter">Umziehen nach Training (min)</label>
+              <input type="number" id="changeAfter" min="0" inputmode="numeric">
+            </div>
           </div>
-          <div>
-            <label for="changeBefore">Umziehen vor Training (min)</label>
-            <input type="number" id="changeBefore" min="0">
+
+          <div class="settings-group">
+            <div class="settings-group-title">Saunagang</div>
+            <div class="settings-field">
+              <label for="saunaDuration">Dauer Saunagang (Standard, min)</label>
+              <input type="number" id="saunaDuration" min="0" inputmode="numeric">
+            </div>
+            <div class="settings-field">
+              <label for="relaxDuration">Relax (Standard, min)</label>
+              <input type="number" id="relaxDuration" min="0" inputmode="numeric">
+            </div>
           </div>
-          <div>
-            <label for="showerAfter">Duschen nach Training (min)</label>
-            <input type="number" id="showerAfter" min="0">
-          </div>
-          <div>
-            <label for="changeAfter">Anziehen nach Training (min)</label>
-            <input type="number" id="changeAfter" min="0">
-          </div>
-          <div>
-            <label for="preSaunaShower">Abduschen vor Sauna (min)</label>
-            <input type="number" id="preSaunaShower" min="0">
-          </div>
-          <div>
-            <label for="saunaDuration">Saunagang (Standard, min)</label>
-            <input type="number" id="saunaDuration" min="0">
-          </div>
-          <div>
-            <label for="postSaunaShower">Abduschen nach Sauna (min)</label>
-            <input type="number" id="postSaunaShower" min="0">
-          </div>
-          <div>
-            <label for="relaxDuration">Relax (Standard, min)</label>
-            <input type="number" id="relaxDuration" min="0">
+
+          <div class="settings-group">
+            <div class="settings-group-title">Duschgänge</div>
+            <div class="settings-field">
+              <label for="preSaunaShower">Abduschen vor Sauna (min)</label>
+              <input type="number" id="preSaunaShower" min="0" inputmode="numeric">
+            </div>
+            <div class="settings-field">
+              <label for="postSaunaShower">Abduschen nach Saunagang (min)</label>
+              <input type="number" id="postSaunaShower" min="0" inputmode="numeric">
+            </div>
+            <div class="settings-field">
+              <label for="showerAfter">Duschen nach Training (und Sauna) (min)</label>
+              <input type="number" id="showerAfter" min="0" inputmode="numeric">
+            </div>
           </div>
         </div>
+
         <div class="settings-footer">
           <button class="small-button" id="resetDefaults" type="button">Standardwerte laden</button>
           <button class="small-button" id="saveSettings" type="button">Einstellungen speichern</button>
@@ -782,15 +800,14 @@
       if (!cardio) {
         strengthMinutes = trainingTime;
         cardioMinutes = 0;
-        els.ratioInfo.textContent = "Cardio deaktiviert – gesamte Trainingszeit: " + trainingTime + " min Kraft.";
         els.ratioSlider.disabled = true;
+        els.ratioInfo.innerHTML =
+          "Nur Kraft: <span class=\"accent-text\">" + trainingTime + " min</span>";
       } else {
         els.ratioSlider.disabled = false;
-        const ratioKraft = Math.round((strengthMinutes / trainingTime) * 100);
-        const ratioCardio = 100 - ratioKraft;
-        els.ratioInfo.textContent =
-          "Kraft: " + strengthMinutes + " min (" + ratioKraft + " %) · Cardio: " +
-          cardioMinutes + " min (" + ratioCardio + " %)";
+        els.ratioInfo.innerHTML =
+          "Kraft: <span class=\"accent-text\">" + strengthMinutes + " min</span> · " +
+          "Cardio: <span class=\"accent-text\">" + cardioMinutes + " min</span>";
       }
 
       let t = start;
@@ -826,16 +843,15 @@
 
       // Sauna-Block
       if (sauna) {
-        // Abduschen vor Sauna (eigene kleine Gruppe)
-        add("Abduschen vor Sauna", "shower", "sauna-pre");
+        // Abduschen vor Sauna + Saunagang als Gruppe
+        add("Abduschen vor Sauna", "shower", "sauna-session");
         t += s.preSaunaShower;
 
-        // Saunagang (Beginn/Ende zusammengehörig)
         add("Beginn Saunagang", "sauna", "sauna-session");
         t += s.saunaDurationEffective;
         add("Ende Saunagang", "sauna", "sauna-session");
 
-        // Abduschen + Relax
+        // Abduschen nach Sauna + Relax als eigene Gruppe
         add("Abduschen nach Sauna", "shower", "sauna-relax");
         t += s.postSaunaShower;
 
@@ -844,17 +860,19 @@
         add("Ende Relax", "relax", "sauna-relax");
       }
 
-      // Abschluss (Duschen, Anziehen, Heimfahrt, Zuhause) – eine Gruppe
-      add("Duschen nach Training", "shower", "finish");
+      // Abschluss
+      // Gruppe: Duschen + Umziehen nach Training
+      add("Duschen nach Training", "shower", "finish-clean");
       t += s.showerAfter;
 
-      add("Anziehen nach Training", "change", "finish");
+      add("Anziehen nach Training", "change", "finish-clean");
       t += s.changeAfter;
 
-      add("Abfahrt nach Hause", "drive", "finish");
+      // Gruppe: Heimfahrt + Zuhause
+      add("Abfahrt nach Hause", "drive", "finish-home");
       t += s.driveBack;
 
-      add("Zuhause", "home", "finish");
+      add("Zuhause", "home", "finish-home");
 
       const summaryHtml =
         '<div class="summary-row">' +
@@ -875,13 +893,12 @@
       let prevGroup = null;
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
-        const catClass = step.cat ? " cat-" + step.cat : "";
         const isGroupStart = step.group && step.group !== prevGroup;
         const groupClass = isGroupStart ? " group-start" : "";
         prevGroup = step.group || prevGroup;
 
         html +=
-          '<li class="timeline-item' + catClass + groupClass + '">' +
+          '<li class="timeline-item' + groupClass + '">' +
             '<span class="time">' + step.time + '</span>' +
             '<span class="label">' + step.label + '</span>' +
           '</li>';
@@ -920,10 +937,9 @@
       }
     });
 
-    // Sauna/Relax Inputs: Inhalt beim Antippen komplett markieren
+    // Sauna/Relax Inline: Inhalt beim Antippen komplett markieren
     [els.saunaDurationInline, els.relaxDurationInline].forEach(function (input) {
       input.addEventListener("focus", function () {
-        // kleines Timeout, damit iOS nicht dazwischenfunkt
         setTimeout(() => {
           input.select();
         }, 10);
@@ -968,6 +984,27 @@
         els.planOutput.innerHTML =
           '<div class="message info">Standardwerte geladen. Bitte Plan erneut berechnen.</div>';
       }
+    });
+
+    // Inhalt beim Antippen in Einstellungsfeldern markieren
+    const numericSettingInputs = [
+      els.driveTo,
+      els.driveBack,
+      els.changeBefore,
+      els.changeAfter,
+      els.saunaDuration,
+      els.relaxDuration,
+      els.preSaunaShower,
+      els.postSaunaShower,
+      els.showerAfter
+    ];
+
+    numericSettingInputs.forEach(function (input) {
+      input.addEventListener("focus", function () {
+        setTimeout(() => {
+          input.select();
+        }, 10);
+      });
     });
 
     // Init
