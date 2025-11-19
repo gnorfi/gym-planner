@@ -103,13 +103,15 @@
     input[type="number"],
     input[type="text"] {
       width: 100%;
-      padding: 8px 10px;
+      padding: 6px 10px;
       border-radius: var(--radius-md);
       border: 1px solid var(--border);
       background: var(--bg-card-alt);
       color: var(--text);
       font-size: 0.9rem;
       outline: none;
+      height: 36px;
+      display: block;
     }
 
     input[type="time"]:focus,
@@ -122,23 +124,26 @@
     .time-input {
       max-width: 140px;
       margin: 0 auto;
-      display: block;
       text-align: center;
     }
 
     .checkbox-row {
       display: flex;
-      gap: 14px;
-      margin-top: 10px;
+      gap: 10px;
+      margin-top: 12px;
       flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .checkbox {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
       font-size: 0.85rem;
       color: var(--text-muted);
+      flex: 1;
     }
 
     .checkbox input {
@@ -151,6 +156,14 @@
       display: none;
       margin-top: 8px;
       gap: 10px;
+      justify-content: space-between;
+    }
+
+    .inline-input {
+      max-width: 120px;
+      margin: 0 auto;
+      text-align: center;
+      display: block;
     }
 
     button {
@@ -236,6 +249,15 @@
       font-weight: 600;
       color: #dddddd;
       margin-bottom: 4px;
+    }
+
+    .settings-group {
+      padding-bottom: 4px;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+    }
+
+    .settings-group:last-child {
+      border-bottom: none;
     }
 
     .settings-field {
@@ -386,6 +408,49 @@
       font-weight: 500;
     }
 
+    /* Toast / Bubble Overlay */
+    .toast-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 999;
+      background: radial-gradient(circle at center, rgba(0, 0, 0, 0.35), transparent 55%);
+    }
+
+    .toast-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .toast-bubble {
+      background: rgba(15, 15, 15, 0.96);
+      padding: 10px 16px;
+      border-radius: 999px;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      color: var(--accent);
+    }
+
     @media (max-width: 380px) {
       body {
         padding: 12px 8px 20px;
@@ -400,6 +465,9 @@
         flex-direction: column;
       }
       .time-input {
+        max-width: 100%;
+      }
+      .inline-input {
         max-width: 100%;
       }
     }
@@ -442,12 +510,12 @@
       <!-- Sauna Inline-Dauer -->
       <div class="sauna-inline-row" id="saunaInlineRow">
         <div class="flex-1">
-          <label for="saunaDurationInline">Sauna (min)</label>
-          <input type="number" id="saunaDurationInline" min="0" inputmode="numeric">
+          <label for="saunaDurationInline" class="center-label">Sauna (min)</label>
+          <input type="number" id="saunaDurationInline" min="0" inputmode="numeric" class="inline-input">
         </div>
         <div class="flex-1">
-          <label for="relaxDurationInline">Relax (min)</label>
-          <input type="number" id="relaxDurationInline" min="0" inputmode="numeric">
+          <label for="relaxDurationInline" class="center-label">Relax (min)</label>
+          <input type="number" id="relaxDurationInline" min="0" inputmode="numeric" class="inline-input">
         </div>
       </div>
 
@@ -553,6 +621,14 @@
     </section>
   </div>
 
+  <!-- Toast / Bubble Overlay -->
+  <div id="toastOverlay" class="toast-overlay">
+    <div class="toast-bubble">
+      <span class="toast-icon">✔</span>
+      <span id="toastMessage">Einstellungen gespeichert</span>
+    </div>
+  </div>
+
   <script>
     const defaultSettings = {
       driveTo: 10,
@@ -597,6 +673,10 @@
       saveSettings: document.getElementById("saveSettings"),
       resetDefaults: document.getElementById("resetDefaults")
     };
+
+    const toastOverlay = document.getElementById("toastOverlay");
+    const toastMessage = document.getElementById("toastMessage");
+    let toastDismissCallback = null;
 
     let currentSettings = { ...defaultSettings };
     let lastPlan = null;
@@ -657,7 +737,6 @@
       } catch (e) {
         console.warn("Konnte Einstellungen nicht speichern:", e);
       }
-      showMainMessage("Einstellungen gespeichert.", "info");
     }
 
     function applySettingsToInputs() {
@@ -699,6 +778,21 @@
       els.mainMessage.textContent = text || "";
       els.mainMessage.className = "message " + (type || "");
     }
+
+    function showToast(message, onDismiss) {
+      toastMessage.textContent = message;
+      toastDismissCallback = typeof onDismiss === "function" ? onDismiss : null;
+      toastOverlay.classList.add("visible");
+    }
+
+    toastOverlay.addEventListener("click", function () {
+      toastOverlay.classList.remove("visible");
+      if (toastDismissCallback) {
+        const cb = toastDismissCallback;
+        toastDismissCallback = null;
+        cb();
+      }
+    });
 
     function calculatePlan() {
       showMainMessage("", "");
@@ -970,11 +1064,13 @@
 
     els.saveSettings.addEventListener("click", function () {
       saveSettings();
-      if (lastPlan) {
-        lastPlan = null;
-        els.planOutput.innerHTML =
-          '<div class="message info">Einstellungen aktualisiert. Bitte Plan erneut berechnen.</div>';
-      }
+      showToast("Einstellungen gespeichert.", function () {
+        calculatePlan();
+        const planSection = document.getElementById("planSection");
+        if (planSection) {
+          planSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
     });
 
     els.resetDefaults.addEventListener("click", function () {
