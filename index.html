@@ -641,6 +641,14 @@
           </div>
 
           <div class="settings-group">
+            <div class="settings-group-title">Training</div>
+            <div class="settings-field">
+              <label for="breakBetween">Pause zwischen Kraft und Cardio (min)</label>
+              <input type="number" id="breakBetween" min="0" inputmode="numeric">
+            </div>
+          </div>
+
+          <div class="settings-group">
             <div class="settings-group-title">Saunagang</div>
             <div class="settings-field">
               <label for="saunaDuration">Dauer Saunagang (Standard, min)</label>
@@ -698,7 +706,8 @@
       postSaunaShower: 5,
       relaxDuration: 15,
       showerAfter: 5,
-      changeAfter: 10
+      changeAfter: 10,
+      breakBetween: 5
     };
 
     const SETTINGS_KEY = "gymPlannerSettings_v1";
@@ -731,6 +740,7 @@
       relaxDuration: document.getElementById("relaxDuration"),
       showerAfter: document.getElementById("showerAfter"),
       changeAfter: document.getElementById("changeAfter"),
+      breakBetween: document.getElementById("breakBetween"),
       saveSettings: document.getElementById("saveSettings"),
       resetDefaults: document.getElementById("resetDefaults")
     };
@@ -791,7 +801,8 @@
         postSaunaShower: toInt(els.postSaunaShower.value, defaultSettings.postSaunaShower),
         relaxDuration: toInt(els.relaxDuration.value, defaultSettings.relaxDuration),
         showerAfter: toInt(els.showerAfter.value, defaultSettings.showerAfter),
-        changeAfter: toInt(els.changeAfter.value, defaultSettings.changeAfter)
+        changeAfter: toInt(els.changeAfter.value, defaultSettings.changeAfter),
+        breakBetween: toInt(els.breakBetween.value, defaultSettings.breakBetween)
       };
       currentSettings = s;
       try {
@@ -811,6 +822,7 @@
       els.relaxDuration.value = currentSettings.relaxDuration;
       els.showerAfter.value = currentSettings.showerAfter;
       els.changeAfter.value = currentSettings.changeAfter;
+      els.breakBetween.value = currentSettings.breakBetween;
     }
 
     function resetDefaults() {
@@ -904,7 +916,6 @@
       container.innerHTML = html;
       container.style.display = "flex";
 
-      // Selektieren beim Fokussieren
       Array.from(container.querySelectorAll("input")).forEach(inp => {
         inp.addEventListener("focus", () => {
           setTimeout(() => inp.select(), 10);
@@ -988,9 +999,9 @@
         fixAfter = s.showerAfter + s.changeAfter + s.driveBack;
       }
 
-      const trainingTime = total - fixBefore - fixAfter;
+      const trainingBudget = total - fixBefore - fixAfter;
 
-      if (trainingTime <= 0) {
+      if (trainingBudget <= 0) {
         showMainMessage(
           "Dein Zeitfenster ist zu knapp. Verringere Fahrzeiten/Sauna oder verschiebe Abfahrt/Zuhause.",
           "error"
@@ -1000,7 +1011,7 @@
         return;
       }
 
-      const sliderMax = Math.max(5, Math.floor(trainingTime / 5) * 5);
+      const sliderMax = Math.max(5, Math.floor(trainingBudget / 5) * 5);
       els.ratioSlider.max = sliderMax;
       let sliderValue = parseInt(els.ratioSlider.value, 10);
       if (!Number.isFinite(sliderValue) || sliderValue < 0 || sliderValue > sliderMax) {
@@ -1011,7 +1022,7 @@
       lastPlan = {
         start,
         end,
-        trainingTime,
+        trainingBudget,
         cardio,
         sauna,
         settings: {
@@ -1030,40 +1041,72 @@
     function renderPlan() {
       if (!lastPlan) return;
 
-      const { start, trainingTime, cardio, sauna, settings: s } = lastPlan;
+      const { start, trainingBudget, cardio, sauna, settings: s } = lastPlan;
 
-      let strengthMinutes = parseInt(els.ratioSlider.value, 10);
-      if (!Number.isFinite(strengthMinutes) || strengthMinutes < 0) {
-        strengthMinutes = Math.floor(trainingTime / 2 / 5) * 5;
-      }
-      if (strengthMinutes > trainingTime) {
-        strengthMinutes = trainingTime;
-      }
+      let strengthRaw = parseInt(els.ratioSlider.value, 10);
+      if (!Number.isFinite(strengthRaw) || strengthRaw < 0) strengthRaw = 0;
+      if (strengthRaw > trainingBudget) strengthRaw = trainingBudget;
 
-      let cardioMinutes = cardio ? trainingTime - strengthMinutes : 0;
+      let strengthMinutes, cardioMinutes, breakBetween;
+      let trainingTimeSegments;
 
       if (!cardio) {
-        strengthMinutes = trainingTime;
+        // nur Kraft
+        breakBetween = 0;
+        strengthMinutes = trainingBudget;
         cardioMinutes = 0;
+        trainingTimeSegments = trainingBudget;
         els.ratioSlider.disabled = true;
         els.ratioInfo.innerHTML =
-          "Nur Kraft: <span class=\"accent-text\">" + trainingTime + " min</span>";
-      } else if (strengthMinutes <= 0) {
-        strengthMinutes = 0;
-        cardioMinutes = trainingTime;
-        els.ratioSlider.disabled = false;
-        els.ratioInfo.innerHTML =
-          "Nur Cardio: <span class=\"accent-text\">" + trainingTime + " min</span>";
-      } else if (cardioMinutes <= 0) {
-        cardioMinutes = 0;
-        els.ratioSlider.disabled = false;
-        els.ratioInfo.innerHTML =
-          "Nur Kraft: <span class=\"accent-text\">" + trainingTime + " min</span>";
+          "Nur Kraft: <span class=\"accent-text\">" + trainingTimeSegments + " min</span>";
       } else {
-        els.ratioSlider.disabled = false;
-        els.ratioInfo.innerHTML =
-          "Kraft: <span class=\"accent-text\">" + strengthMinutes + " min</span> · " +
-          "Cardio: <span class=\"accent-text\">" + cardioMinutes + " min</span>";
+        // Cardio an
+        let cardioRaw = trainingBudget - strengthRaw;
+
+        if (strengthRaw <= 0) {
+          // nur Cardio
+          breakBetween = 0;
+          strengthMinutes = 0;
+          cardioMinutes = trainingBudget;
+          trainingTimeSegments = trainingBudget;
+          els.ratioSlider.disabled = false;
+          els.ratioInfo.innerHTML =
+            "Nur Cardio: <span class=\"accent-text\">" + trainingTimeSegments + " min</span>";
+        } else if (cardioRaw <= 0) {
+          // nur Kraft
+          breakBetween = 0;
+          strengthMinutes = trainingBudget;
+          cardioMinutes = 0;
+          trainingTimeSegments = trainingBudget;
+          els.ratioSlider.disabled = false;
+          els.ratioInfo.innerHTML =
+            "Nur Kraft: <span class=\"accent-text\">" + trainingTimeSegments + " min</span>";
+        } else {
+          // beide aktiv -> Pause zwischen Kraft & Cardio einplanen
+          breakBetween = s.breakBetween || 0;
+          const segmentsBudget = trainingBudget - breakBetween;
+          if (segmentsBudget <= 0) {
+            showMainMessage(
+              "Zeitfenster zu knapp für die Pause zwischen Kraft und Cardio.",
+              "error"
+            );
+            els.planOutput.innerHTML =
+              '<div class="message error">Zeitfenster zu knapp für Trainings-Pause.</div>';
+            return;
+          }
+
+          const ratio = strengthRaw / trainingBudget;
+          strengthMinutes = Math.round((segmentsBudget * ratio) / 5) * 5;
+          if (strengthMinutes < 0) strengthMinutes = 0;
+          if (strengthMinutes > segmentsBudget) strengthMinutes = segmentsBudget;
+          cardioMinutes = segmentsBudget - strengthMinutes;
+
+          trainingTimeSegments = segmentsBudget;
+          els.ratioSlider.disabled = false;
+          els.ratioInfo.innerHTML =
+            "Kraft: <span class=\"accent-text\">" + strengthMinutes + " min</span> · " +
+            "Cardio: <span class=\"accent-text\">" + cardioMinutes + " min</span>";
+        }
       }
 
       let t = start;
@@ -1081,14 +1124,14 @@
         });
       }
 
-      // Abfahrt & Ankunft
+      // Hinfahrt
       add("Abfahrt", "drive-out");
       t += s.driveTo;
 
       add("Ankunft im Gym", "drive-out");
       t += s.changeBefore;
 
-      if (trainingTime > 0) {
+      if (trainingTimeSegments > 0) {
         addHeader("Training");
       }
 
@@ -1099,6 +1142,12 @@
         add("Ende Kraft-Training", "strength");
       }
 
+      // Pause zwischen Kraft & Cardio
+      if (strengthMinutes > 0 && cardioMinutes > 0 && (s.breakBetween || 0) > 0) {
+        add("Pause zwischen Kraft & Cardio", "training-break");
+        t += s.breakBetween;
+      }
+
       // Cardio
       if (cardioMinutes > 0) {
         add("Beginn Cardio-Training", "cardio");
@@ -1106,13 +1155,12 @@
         add("Ende Cardio-Training", "cardio");
       }
 
-      // Sauna-Block
+      // Sauna
       if (sauna && s.saunaCount > 0) {
         addHeader("Sauna");
 
         const count = s.saunaCount;
 
-        // Gang 1 inkl. Abduschen davor
         add("Abduschen vor Sauna", "sauna-1");
         t += s.preSaunaShower;
 
@@ -1127,7 +1175,6 @@
         t += s.relaxDurations[0] ?? s.relaxDurationEffective;
         add("Ende Relax 1", "sauna-relax-1");
 
-        // Weitere Gänge (2..n)
         for (let i = 2; i <= count; i++) {
           const idx = i - 1;
           const gSauna = "sauna-session-" + i;
@@ -1169,7 +1216,7 @@
       const summaryHtml =
         '<div class="summary-row">' +
           '<span>Trainingszeit gesamt:</span>' +
-          '<span class="summary-highlight">' + trainingTime + ' min</span>' +
+          '<span class="summary-highlight">' + trainingTimeSegments + ' min</span>' +
         '</div>' +
         '<div class="summary-row">' +
           '<span>Kraft / Cardio (min):</span>' +
@@ -1267,6 +1314,12 @@
     els.saveSettings.addEventListener("click", function () {
       saveSettings();
       showToast("Einstellungen gespeichert.", function () {
+        // Einstellungen zuklappen
+        els.settingsBody.style.display = "none";
+        els.settingsToggleIcon.textContent = "+";
+        const span = els.settingsToggle.querySelector("span");
+        if (span) span.textContent = "Einstellungen öffnen";
+
         calculatePlan();
         const planSection = document.getElementById("planSection");
         if (planSection) {
@@ -1294,7 +1347,8 @@
       els.relaxDuration,
       els.preSaunaShower,
       els.postSaunaShower,
-      els.showerAfter
+      els.showerAfter,
+      els.breakBetween
     ];
 
     numericSettingInputs.forEach(function (input) {
