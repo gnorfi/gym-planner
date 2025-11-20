@@ -615,6 +615,20 @@
   width: 100%;
   text-align: center;
 }
+
+    /* Zentrierung Labels + Selectfelder */
+.settings-field label {
+  width: 100%;
+  text-align: center;
+  display: block;
+}
+
+.settings-field select {
+  text-align-last: center;      /* Chrome/Firefox */
+  text-align: center;           /* Safari */
+  width: 100%;
+}
+    
   </style>
 </head>
 <body>
@@ -800,12 +814,12 @@
 
 <div class="settings-flex-row">
   <div class="settings-field">
-    <label for="preSaunaShower">Abduschen vor'm Sauna</label>
+    <label for="preSaunaShower">Abduschen vor der Sauna</label>
     <select id="preSaunaShower"></select>
   </div>
 
   <div class="settings-field">
-    <label for="postSaunaShower">Abduschen nach'm Saunagang</label>
+    <label for="postSaunaShower">Abduschen nach der Sauna</label>
     <select id="postSaunaShower"></select>
   </div>
 </div>
