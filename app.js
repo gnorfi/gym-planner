@@ -1,11 +1,12 @@
 // ---------------------------
 // Bootstrap
 // ---------------------------
-const $ = s => document.querySelector(s);
-const $$ = s => document.querySelectorAll(s);
+const $ = sel => document.querySelector(sel);
+const $$ = sel => document.querySelectorAll(sel);
 
 let state = {
   reverseMode: false,
+  reverseAnchor: "start",
   cardio: true,
   sauna: false,
   saunaOnly: false,
@@ -42,21 +43,26 @@ function toInt(v, fb) {
 }
 
 function parseTime(str) {
-  if (!/^\d{2}:\d{2}$/.test(str)) return null;
-  const [h, m] = str.split(":").map(Number);
-  if (h < 0 || h > 23 || m < 0 || m > 59) return null;
+  if (!str || !str.includes(":")) return null;
+  const [h, m] = str.split(":").map(x => parseInt(x, 10));
+  if (isNaN(h) || isNaN(m)) return null;
   return h * 60 + m;
 }
 
-function fmt(m) {
-  const mm = ((m % 1440) + 1440) % 1440;
-  const h = Math.floor(mm / 60);
-  const mi = mm % 60;
-  return `${String(h).padStart(2, "0")}:${String(mi).padStart(2, "0")}`;
+function fmt(mins) {
+  mins = (mins % 1440 + 1440) % 1440;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function getInt(el, fb = 0) {
+  const v = parseInt(el.value, 10);
+  return Number.isFinite(v) ? v : fb;
 }
 
 // ---------------------------
-// iOS Picker
+// Picker Builder
 // ---------------------------
 function buildPicker(selectEl, min, max, step = 1) {
   selectEl.innerHTML = "";
@@ -131,7 +137,7 @@ function applySettingsToUI() {
 }
 
 // ---------------------------
-// Reverse-Mode UI Reset
+// Reverse UI
 // ---------------------------
 function syncReverseUI() {
   if (state.reverseMode) {
@@ -142,8 +148,9 @@ function syncReverseUI() {
     $("#main_times").style.display = "block";
   }
 }
+
 // ---------------------------
-// Button / Toggle Logic
+// Toggles
 // ---------------------------
 function toggleButton(btn, active) {
   if (active) {
@@ -155,26 +162,17 @@ function toggleButton(btn, active) {
   }
 }
 
-// ---------------------------
-// Reverse Mode Toggle
-// ---------------------------
 $("#btn_reverse").addEventListener("click", () => {
   state.reverseMode = !state.reverseMode;
   toggleButton($("#btn_reverse"), state.reverseMode);
   syncReverseUI();
 });
 
-// ---------------------------
-// Cardio Toggle
-// ---------------------------
 $("#btn_cardio").addEventListener("click", () => {
   state.cardio = !state.cardio;
   toggleButton($("#btn_cardio"), state.cardio);
 });
 
-// ---------------------------
-// Sauna Toggle
-// ---------------------------
 $("#btn_sauna").addEventListener("click", () => {
   state.sauna = !state.sauna;
   toggleButton($("#btn_sauna"), state.sauna);
@@ -182,7 +180,7 @@ $("#btn_sauna").addEventListener("click", () => {
 });
 
 // ---------------------------
-// Settings Panel
+// Settings panel
 // ---------------------------
 $("#btn_settings").addEventListener("click", () => {
   state.settingsOpen = !state.settingsOpen;
@@ -198,17 +196,11 @@ $("#btn_settings").addEventListener("click", () => {
   }
 });
 
-// ---------------------------
-// Save Settings
-// ---------------------------
 $("#save_settings").addEventListener("click", () => {
   saveSettings();
   showToast("Einstellungen gespeichert");
 });
 
-// ---------------------------
-// Reset to Defaults
-// ---------------------------
 $("#reset_settings").addEventListener("click", () => {
   settings = { ...defaultSettings };
   applySettingsToUI();
@@ -217,7 +209,7 @@ $("#reset_settings").addEventListener("click", () => {
 });
 
 // ---------------------------
-// Version Panel
+// Version panel
 // ---------------------------
 $("#btn_versions").addEventListener("click", () => {
   state.versionPanelOpen = !state.versionPanelOpen;
@@ -232,30 +224,9 @@ $("#btn_versions").addEventListener("click", () => {
     $("#version_panel").style.display = "none";
   }
 });
-// ---------------------------
-// Time Helpers
-// ---------------------------
-function parseTime(str) {
-  if (!str || !str.includes(":")) return null;
-  const [h, m] = str.split(":").map(x => parseInt(x, 10));
-  if (isNaN(h) || isNaN(m)) return null;
-  return h * 60 + m;
-}
-
-function fmt(mins) {
-  mins = (mins % 1440 + 1440) % 1440;
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
-
-function getInt(el, fb = 0) {
-  const v = parseInt(el.value, 10);
-  return Number.isFinite(v) ? v : fb;
-}
 
 // ---------------------------
-// Sauna Data Builder
+// Sauna Data
 // ---------------------------
 function getSaunaData() {
   if (!state.sauna) return { count: 0, sessions: [] };
@@ -283,7 +254,7 @@ function getSaunaData() {
 }
 
 // ---------------------------
-// Calculate (Dispatcher)
+// Calculate Dispatcher
 // ---------------------------
 function calculate() {
   if (state.reverseMode) return calculateReverse();
@@ -391,6 +362,7 @@ function calculateReverse() {
 
       const usable = totalTrain - pause;
       const r = raw / totalTrain;
+
       strength = Math.round(usable * r);
       cardio = usable - strength;
     }
@@ -449,7 +421,9 @@ function renderError(msg) {
     `<div class="error_box">${msg}</div>`;
   $("#copy_wrap").style.display = "none";
   state.result = null;
-}// ---------------------------
+}
+
+// ---------------------------
 // Render Plan
 // ---------------------------
 function renderPlan() {
@@ -582,68 +556,7 @@ function showToast(msg) {
 }
 
 // ---------------------------
-// Init Helpers
-// ---------------------------
-function $(sel) {
-  return document.querySelector(sel);
-}
-
-function populateSelect(sel, min, max, step = 1) {
-  const el = $(sel);
-  el.innerHTML = "";
-  for (let v = min; v <= max; v += step) {
-    const opt = document.createElement("option");
-    opt.value = v;
-    opt.textContent = v + " min";
-    el.appendChild(opt);
-  }
-}
-
-function populateCount(sel, min, max) {
-  const el = $(sel);
-  el.innerHTML = "";
-  for (let i = min; i <= max; i++) {
-    const opt = document.createElement("option");
-    opt.value = i;
-    opt.textContent = i;
-    el.appendChild(opt);
-  }
-}
-
-// ---------------------------
-// Init UI
-// ---------------------------
-function initUI() {
-  populateSelect("#drive_to", 0, 60);
-  populateSelect("#drive_back", 0, 60);
-  populateSelect("#change_before", 1, 10);
-  populateSelect("#change_after", 1, 10);
-  populateSelect("#break_between", 1, 10);
-  populateSelect("#sauna_std", 5, 25);
-  populateSelect("#relax_std", 0, 25);
-  populateSelect("#pre_sauna_shower", 0, 5);
-  populateSelect("#post_sauna_shower", 0, 5);
-  populateSelect("#shower_after", 0, 10);
-
-  populateSelect("#sauna_dur", 5, 25);
-  populateSelect("#relax_dur", 0, 25);
-  populateCount("#sauna_count", 1, 5);
-
-  populateSelect("#train_total", 5, 300, 5);
-
-  loadSettings();
-
-  const now = new Date();
-  const m = now.getHours() * 60 + now.getMinutes();
-  $("#time_start").value = fmt(m + 15);
-  $("#time_end").value = fmt(m + 15 + 150);
-
-  updateSaunaUI();
-  calculate();
-}
-
-// ---------------------------
-// Sauna UI builder
+// Sauna UI Builder
 // ---------------------------
 function updateSaunaUI() {
   const c = getInt($("#sauna_count"), 1);
@@ -663,13 +576,15 @@ function updateSaunaUI() {
       `<select id="s_dur_${i}" class="s_in"></select>` +
       `<select id="s_rel_${i}" class="s_in"></select>`;
     wrap.appendChild(row);
-    populateSelect(`#s_dur_${i}`, 5, 25);
-    populateSelect(`#s_rel_${i}`, 0, 25);
+
+    buildPicker($(`#s_dur_${i}`), 5, 25, 1);
+    buildPicker($(`#s_rel_${i}`), 0, 25, 1);
+
     $(`#s_dur_${i}`).value = settings.saunaDuration;
     $(`#s_rel_${i}`).value = settings.relaxDuration;
 
-    $(`#s_dur_${i}`).addEventListener("input", () => calculate());
-    $(`#s_rel_${i}`).addEventListener("input", () => calculate());
+    $(`#s_dur_${i}`).addEventListener("input", calculate);
+    $(`#s_rel_${i}`).addEventListener("input", calculate);
   }
 
   wrap.style.display = "block";
@@ -706,6 +621,19 @@ $("#time_end").addEventListener("input", () => { state.reverseAnchor = "end"; ca
 $("#sauna_count").addEventListener("input", () => { updateSaunaUI(); calculate(); });
 
 // ---------------------------
-// Start
+// Init
 // ---------------------------
+function initUI() {
+  buildAllPickers();
+  loadSettings();
+
+  const now = new Date();
+  const m = now.getHours() * 60 + now.getMinutes();
+  $("#time_start").value = fmt(m + 15);
+  $("#time_end").value = fmt(m + 15 + 150);
+
+  updateSaunaUI();
+  calculate();
+}
+
 initUI();
