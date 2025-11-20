@@ -637,7 +637,7 @@
   font-weight: 600;
 }
 
-    /* Kleine Überschriften (Abfahrt/Zuhause + Zusammenfassungen im Zeitplan) in Akzentfarbe */
+/* Kleine Überschriften (Abfahrt/Zuhause + Zusammenfassungen im Zeitplan) in Akzentfarbe */
 .center-label,
 .summary-row span:first-child,
 .timeline-header {
@@ -645,20 +645,25 @@
   font-weight: 600;
 }
 
-    
 /* Zentrierung Labels + Selectfelder */
-.settings-field select {
-  text-align-last: center;
-  text-align: center;
-  width: 100%;
-}
-
 .settings-field select {
   text-align-last: center;      /* Chrome/Firefox */
   text-align: center;           /* Safari */
   width: 100%;
 }
-    
+
+/* Einstellungen – Titel & Header wie Zeitfenster/ Zeitplan */
+#settingsSection .card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;      /* zentriert Titel & Button */
+  gap: 8px;                 /* etwas Abstand */
+}
+
+#settingsSection .card-title {
+  text-align: center;
+  width: 100%;
+}
   </style>
 </head>
 <body>
@@ -772,7 +777,7 @@
     </section>
 
     <!-- Einstellungen -->
-    <section class="card">
+    <section class="card" id="settingsSection">
       <div class="card-header">
         <div>
           <div class="card-title">Einstellungen</div>
