@@ -1,259 +1,225 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <title>Gym-Planner</title>
-<link rel="stylesheet" href="app.css?v=2">
-  <!-- App Manifest + Icon -->
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icons/app-icon.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-  <!-- Viewport -->
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Stylesheet -->
-  <link rel="stylesheet" href="app.css?v=2">
+  <!-- APP NAME -->
+  <title>Gym-Planner</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="app.css?v=3">
+
+  <!-- PWA MANIFEST -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iOS PWAs -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <!-- APP ICON -->
+  <link rel="apple-touch-icon" href="icons/app-icon.png">
+  <link rel="icon" href="icons/app-icon.png">
 </head>
 
 <body>
+
   <div id="app">
 
     <!-- HEADER -->
-    <header class="app-header">
-      <h1>Gym-Planner</h1>
-    </header>
+    <h1 class="app_title">Gym-Planner</h1>
 
-    <!-- ============================
-         SECTION: Zeitfenster
-    ============================= -->
-    <section class="card" id="section-time">
+    <!-- ZEITFENSTER -->
+    <div class="section">
+      <h2 class="sect_title">Zeitfenster</h2>
 
-      <h2 class="section-title">Zeitfenster</h2>
+      <!-- Reverse-Modus Button -->
+      <button id="btn_reverse" class="toggle-btn btn-inactive">Reverse-Modus</button>
 
-      <!-- Reverse Mode Button -->
-      <div class="toggle-row">
-        <button id="btn-reverse" class="toggle-button" data-active="false">
-          Reverse-Modus
-        </button>
-      </div>
-
-      <!-- Abfahrt / Zuhause -->
-      <div class="row two-columns">
-        <div class="col">
-          <label class="label-center">Abfahrt</label>
-          <input type="time" id="time-start" class="time-input">
+      <!-- Normaler Bereich -->
+      <div id="main_times" class="time_row">
+        <div class="time_block">
+          <label>Abfahrt</label>
+          <input type="time" id="time_start">
         </div>
-
-        <div class="col">
-          <label class="label-center">Zuhause</label>
-          <input type="time" id="time-end" class="time-input">
+        <div class="time_block">
+          <label>Zuhause</label>
+          <input type="time" id="time_end">
         </div>
       </div>
 
-      <!-- Trainingszeit (Reverse) -->
-      <div id="reverse-training-container" class="reverse-block hidden">
-        <label class="label-center">Trainingszeit gesamt</label>
-        <select id="reverse-train-total" class="picker"></select>
+      <!-- Reverse Bereich -->
+      <div id="rev_block" class="rev_box" style="display:none;">
+        <label>Trainingszeit (gesamt)</label>
+        <select id="train_total"></select>
       </div>
 
-      <!-- Cardio Button -->
-      <div class="toggle-row">
-        <button id="btn-cardio" class="toggle-button" data-active="true">
-          Cardio einplanen
-        </button>
+    </div>
+
+
+    <!-- Cardio -->
+    <div class="section">
+      <button id="btn_cardio" class="toggle-btn btn-active">Cardio einplanen</button>
+
+      <div id="ratio_wrap">
+        <label>Verhältnis Kraft / Cardio</label>
+        <input type="range" id="ratio_slider" min="1" max="99" value="50">
       </div>
-
-      <!-- Verhältnis-Slider -->
-      <div id="ratio-container" class="ratio-container">
-        <label class="ratio-label">Verhältnis Kraft / Cardio</label>
-        <div id="ratio-info" class="ratio-info muted">
-          erst nach der ersten Berechnung sinnvoll nutzbar
-        </div>
-        <input type="range" id="ratio-slider" min="0" max="60" value="30" step="1">
-      </div>
-
-      <!-- Sauna Button -->
-      <div class="toggle-row">
-        <button id="btn-sauna" class="toggle-button" data-active="false">
-          Sauna einplanen
-        </button>
-      </div>
-
-      <!-- Sauna Inline Block -->
-      <div id="sauna-inline" class="sauna-inline hidden">
-        <div class="inline-block">
-          <label class="label-center">Sauna (min)</label>
-          <select id="sauna-dur" class="picker"></select>
-        </div>
-
-        <div class="inline-block">
-          <label class="label-center">Relax (min)</label>
-          <select id="relax-dur" class="picker"></select>
-        </div>
-
-        <div class="inline-block">
-          <label class="label-center">Gänge</label>
-          <select id="sauna-count" class="picker"></select>
-        </div>
-      </div>
-
-      <!-- Sauna Only Button -->
-      <div id="sauna-only-row" class="toggle-row hidden">
-        <button id="btn-sauna-only" class="toggle-button" data-active="false">
-          Sauna only
-        </button>
-      </div>
-
-      <!-- Dynamische Sauna-Gang-Konfiguration -->
-      <div id="sauna-sessions" class="sauna-sessions hidden"></div>
-
-      <!-- Sauna Validierung -->
-      <div id="sauna-validation" class="validation-msg"></div>
-
-      <!-- Berechnen Button -->
-      <button id="btn-calc" class="primary-button">Berechnen</button>
-
-      <div id="msg-main" class="main-msg"></div>
-    </section>
+    </div>
 
 
-    <!-- ============================
-         SECTION: Zeitplan
-    ============================= -->
-    <section class="card" id="section-plan">
-      <h2 class="section-title">Zeitplan</h2>
+    <!-- Sauna -->
+    <div class="section">
+      <button id="btn_sauna" class="toggle-btn btn-inactive">Sauna einplanen</button>
 
-      <div id="plan-output" class="plan-output">
-        <div class="placeholder muted">
-          Noch kein Plan berechnet.
-        </div>
-      </div>
-
-      <div class="copy-area hidden" id="copy-area">
-        <button id="btn-copy" class="copy-button">Kopieren</button>
-        <div id="copy-info" class="copy-info"></div>
-      </div>
-    </section>
-
-
-    <!-- ============================
-         SECTION: Einstellungen
-    ============================= -->
-    <section class="card" id="section-settings">
-      <div class="settings-header">
-        <h2 class="section-title">Einstellungen</h2>
-
-        <button id="btn-settings" class="accordion-button" data-open="false">
-          Einstellungen
-        </button>
-      </div>
-
-      <div id="settings-body" class="settings-body hidden">
-
-        <!-- Fahrten -->
-        <div class="settings-group">
-          <h3 class="settings-subtitle">Fahrten</h3>
-          <div class="row two-columns">
-            <div class="col">
-              <label>Fahrt ins Gym</label>
-              <select id="set-drive-in" class="picker"></select>
-            </div>
-            <div class="col">
-              <label>Heimfahrt</label>
-              <select id="set-drive-out" class="picker"></select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Kleidungswechsel -->
-        <div class="settings-group">
-          <h3 class="settings-subtitle">Kleidungswechsel</h3>
-          <div class="row two-columns">
-            <div class="col">
-              <label>Umziehen vor Training</label>
-              <select id="set-change-before" class="picker"></select>
-            </div>
-            <div class="col">
-              <label>Umziehen nach Training</label>
-              <select id="set-change-after" class="picker"></select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Training -->
-        <div class="settings-group">
-          <h3 class="settings-subtitle">Training</h3>
-          <label>Pause zwischen Kraft & Cardio</label>
-          <select id="set-break" class="picker"></select>
-        </div>
-
-        <!-- Sauna -->
-        <div class="settings-group">
-          <h3 class="settings-subtitle">Saunagang</h3>
-          <div class="row two-columns">
-            <div class="col">
-              <label>Dauer Saunagang</label>
-              <select id="set-sauna-dur" class="picker"></select>
-            </div>
-            <div class="col">
-              <label>Relax</label>
-              <select id="set-relax-dur" class="picker"></select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Duschen -->
-        <div class="settings-group">
-          <h3 class="settings-subtitle">Duschgänge</h3>
-          <div class="row two-columns">
-            <div class="col">
-              <label>Abduschen vor Sauna</label>
-              <select id="set-pre-sauna" class="picker"></select>
-            </div>
-            <div class="col">
-              <label>Abduschen nach Sauna</label>
-              <select id="set-post-sauna" class="picker"></select>
-            </div>
-          </div>
-
-          <label>Duschen nach Training</label>
-          <select id="set-final-shower" class="picker"></select>
-        </div>
-
-        <div class="settings-footer">
-          <button id="btn-defaults" class="small-button">Standardwerte</button>
-          <button id="btn-save" class="small-button">Speichern</button>
-          <p class="note">Alle Werte werden lokal gespeichert.</p>
-        </div>
-      </div>
-    </section>
-
-
-    <!-- ============================
-         SECTION: Version History
-    ============================= -->
-    <section class="card" id="section-version">
-      <h2 class="section-title">Version</h2>
-
-      <button id="btn-version" class="accordion-button" data-open="false">
-        Version anzeigen
+      <!-- Sauna-Only -->
+      <button id="btn_sauna_only" class="toggle-btn btn-inactive" style="margin-top:10px; display:none;">
+        Sauna-Only-Modus
       </button>
 
-      <div id="version-body" class="version-body hidden">
-        <div id="version-content"></div>
+      <!-- Sauna Inline -->
+      <div id="sauna_inline_wrap" style="display:none;">
+        <div class="inline_row">
+          <div>
+            <label>Sauna (min)</label>
+            <select id="sauna_dur"></select>
+          </div>
+          <div>
+            <label>Relax (min)</label>
+            <select id="relax_dur"></select>
+          </div>
+          <div>
+            <label>Gänge</label>
+            <select id="sauna_count"></select>
+          </div>
+        </div>
+
+        <!-- Dynamische Sauna UI -->
+        <div id="sauna_sessions"></div>
       </div>
-    </section>
+    </div>
 
 
-    <!-- Toast -->
-    <div id="toast" class="toast hidden"></div>
+    <!-- BERECHNEN BUTTON -->
+    <button id="calc_btn" class="main_btn">Berechnen</button>
+
+
+    <!-- AUSGABE -->
+    <div id="plan_output" class="output_box"></div>
+
+    <!-- KOPIEREN BUTTON -->
+    <div id="copy_wrap" style="display:none; text-align:center; margin-top:20px;">
+      <button id="copy_btn" class="main_btn small">Kopieren</button>
+    </div>
+
+
+    <!-- EINSTELLUNGEN -->
+    <button id="btn_settings" class="toggle-btn btn-inactive" style="margin-top:30px;">
+      Einstellungen
+    </button>
+
+    <div id="settings_panel" class="panel" style="display:none;">
+      <h3>Einstellungen</h3>
+
+      <!-- Fahrten -->
+      <h4>Fahrten</h4>
+      <div class="inline_row">
+        <div>
+          <label>Fahrt ins Gym</label>
+          <select id="set_driveTo"></select>
+        </div>
+        <div>
+          <label>Heimfahrt</label>
+          <select id="set_driveBack"></select>
+        </div>
+      </div>
+
+      <!-- Kleidung -->
+      <h4>Kleidung</h4>
+      <div class="inline_row">
+        <div>
+          <label>Umziehen vor</label>
+          <select id="set_changeBefore"></select>
+        </div>
+        <div>
+          <label>Umziehen nach</label>
+          <select id="set_changeAfter"></select>
+        </div>
+      </div>
+
+      <!-- Training Pause -->
+      <h4>Training</h4>
+      <div class="single_row">
+        <label>Pause Kraft/Cardio</label>
+        <select id="set_breakBetween"></select>
+      </div>
+
+      <!-- Sauna -->
+      <h4>Saunagang</h4>
+      <div class="inline_row">
+        <div>
+          <label>Dauer Sauna</label>
+          <select id="set_saunaDuration"></select>
+        </div>
+        <div>
+          <label>Relax</label>
+          <select id="set_relaxDuration"></select>
+        </div>
+      </div>
+
+      <!-- Duschen -->
+      <h4>Duschgänge</h4>
+      <div class="inline_row">
+        <div>
+          <label>Vor Sauna</label>
+          <select id="set_preSauna"></select>
+        </div>
+        <div>
+          <label>Nach Sauna</label>
+          <select id="set_postSauna"></select>
+        </div>
+      </div>
+
+      <div class="single_row">
+        <label>Duschen nach Training</label>
+        <select id="set_showerAfter"></select>
+      </div>
+
+      <!-- SAVE -->
+      <button id="save_settings" class="main_btn small">Speichern</button>
+      <button id="reset_settings" class="main_btn small" style="margin-top:10px;">Standard laden</button>
+    </div>
+
+
+    <!-- VERSIONEN -->
+    <button id="btn_versions" class="toggle-btn btn-inactive" style="margin-top:20px;">
+      Versionen
+    </button>
+
+    <div id="version_panel" class="panel" style="display:none;">
+      <h3>Version 1.4 (Aktuell)</h3>
+      <p>- Neues UI<br>- Reverse-Modus<br>- Sauna-Only<br>- Picker-Optimierung<br>- Buttons statt Checkboxen</p>
+
+      <h3>Version 1.3</h3>
+      <p>Mehrere Saunagänge etc.</p>
+
+      <h3>Version 1.2</h3>
+      <p>Sauna Implementierung</p>
+
+      <h3>Version 1.1</h3>
+      <p>Training, Cardio etc.</p>
+
+      <h3>Version 1.0</h3>
+      <p>Grundfunktion</p>
+    </div>
 
   </div>
 
-  <!-- JavaScript -->
-  <script type="module" src="app.js?v=2"></script>
 
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <!-- JAVASCRIPT -->
+  <script src="app.js?v=5"></script>
 </body>
 </html>
