@@ -599,6 +599,19 @@
       .inline-input {
         max-width: 100%;
       }
+      .settings-flex-row {
+  display: flex;
+  gap: 10px;
+}
+
+.settings-flex-row > .settings-field {
+  flex: 1;
+}
+
+.settings-field-full {
+  width: 100%;
+  text-align: center;
+}
     }
   </style>
 </head>
@@ -728,14 +741,17 @@
         <div class="settings-groups">
           <div class="settings-group">
             <div class="settings-group-title">Fahrten</div>
-            <div class="settings-field">
-              <label for="driveTo">Fahrt ins Gym (min)</label>
-              <select id="driveTo"></select>
-            </div>
-            <div class="settings-field">
-              <label for="driveBack">Heimfahrt (min)</label>
-              <select id="driveBack"></select>
-            </div>
+<div class="settings-flex-row">
+  <div class="settings-field">
+    <label for="driveTo">Fahrt ins Gym (min)</label>
+    <select id="driveTo"></select>
+  </div>
+
+  <div class="settings-field">
+    <label for="driveBack">Heimfahrt (min)</label>
+    <select id="driveBack"></select>
+  </div>
+</div>
           </div>
 
           <div class="settings-group">
