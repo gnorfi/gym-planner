@@ -2,6 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
+  
   <title>Gym-Planner</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/app-icon.png">
@@ -23,6 +24,44 @@
       --radius-md: 10px;
       --shadow-soft: 0 18px 35px rgba(0, 0, 0, 0.5);
     }
+
+    /* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+       NEUER CODE FÜR DIE CHECKBOX-BUTTONS
+       (hier einfach drin lassen, nichts ändern)
+       <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+    .toggle-button {
+      display: inline-block;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 2px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      user-select: none;
+      transition: 0.2s;
+    }
+
+    /* Checkbox verstecken */
+    .toggle-button + input[type="checkbox"],
+    input[type="checkbox"] {
+      display: none;
+    }
+
+    /* Wenn die Checkbox aktiv ist → Button leuchtet */
+    input[type="checkbox"]:checked + .toggle-button {
+      background: var(--accent);
+      color: #111;
+      border-color: var(--accent);
+    }
+
+    /* Hover-Effekt */
+    .toggle-button:hover {
+      background: rgba(61, 216, 163, 0.15);
+    }
+    /* >>>>>>>>>>>>> ENDE NEUER CODE <<<<<<<<<<<<< */
+
 
     * {
       box-sizing: border-box;
