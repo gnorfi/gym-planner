@@ -351,17 +351,7 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.35);
 }
 
-/* Kleines Icon links (Plus/Minus) */
-#settingsToggleIcon {
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  border: 1px solid currentColor;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-}
+
 
     .settings-body {
       margin-top: 10px;
@@ -788,7 +778,6 @@
           <div class="card-title">Einstellungen</div>
         </div>
         <div id="settingsToggle">
-          <div class="settings-toggle-icon" id="settingsToggleIcon">+</div>
           <span>Einstellungen öffnen</span>
         </div>
       </div>
@@ -929,7 +918,6 @@
       mainMessage: document.getElementById("mainMessage"),
       planOutput: document.getElementById("planOutput"),
       settingsToggle: document.getElementById("settingsToggle"),
-      settingsToggleIcon: document.getElementById("settingsToggleIcon"),
       settingsBody: document.getElementById("settingsBody"),
       driveTo: document.getElementById("driveTo"),
       driveBack: document.getElementById("driveBack"),
@@ -2150,9 +2138,6 @@
   // Sichtbarkeit toggeln
   els.settingsBody.style.display = open ? "none" : "block";
 
-  // Icon anpassen
-  els.settingsToggleIcon.textContent = open ? "+" : "–";
-
   // Text anpassen
   const span = els.settingsToggle.querySelector("span");
   if (span) span.textContent = open ? "Einstellungen öffnen" : "Einstellungen schließen";
@@ -2174,7 +2159,6 @@
       saveSettings();
       showToast("Einstellungen gespeichert.", function () {
         els.settingsBody.style.display = "none";
-        els.settingsToggleIcon.textContent = "+";
         const span = els.settingsToggle.querySelector("span");
         if (span) span.textContent = "Einstellungen öffnen";
 
