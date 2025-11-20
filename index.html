@@ -319,27 +319,49 @@
       box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6);
     }
 
-    .settings-toggle {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      cursor: pointer;
-      user-select: none;
-    }
+    /* Neuer Settings-Button im Toggle-Button Stil */
+#settingsToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  user-select: none;
+  transition: 0.2s;
+  width: fit-content;
+  margin: 0 auto; /* zentriert */
+}
 
-    .settings-toggle-icon {
-      width: 16px;
-      height: 16px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.7rem;
-      opacity: 0.8;
-    }
+#settingsToggle:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.25);
+}
+
+#settingsToggle.active {
+  background: linear-gradient(135deg, var(--accent), #2ba57a);
+  color: #111;
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+}
+
+/* Kleines Icon links (Plus/Minus) */
+#settingsToggleIcon {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+}
 
     .settings-body {
       margin-top: 10px;
@@ -765,7 +787,7 @@
         <div>
           <div class="card-title">Einstellungen</div>
         </div>
-        <div class="settings-toggle" id="settingsToggle">
+        <div id="settingsToggle">
           <div class="settings-toggle-icon" id="settingsToggleIcon">+</div>
           <span>Einstellungen öffnen</span>
         </div>
@@ -2123,14 +2145,30 @@
     });
 
     els.settingsToggle.addEventListener("click", function () {
-      const open = els.settingsBody.style.display === "block";
-      els.settingsBody.style.display = open ? "none" : "block";
-      els.settingsToggleIcon.textContent = open ? "+" : "–";
-      const span = els.settingsToggle.querySelector("span");
-      if (span) {
-        span.textContent = open ? "Einstellungen öffnen" : "Einstellungen schließen";
-      }
-    });
+  const open = els.settingsBody.style.display === "block";
+
+  // Sichtbarkeit toggeln
+  els.settingsBody.style.display = open ? "none" : "block";
+
+  // Icon anpassen
+  els.settingsToggleIcon.textContent = open ? "+" : "–";
+
+  // Text anpassen
+  const span = els.settingsToggle.querySelector("span");
+  if (span) span.textContent = open ? "Einstellungen öffnen" : "Einstellungen schließen";
+
+  // Button-Look toggeln
+  if (open) {
+    // wenn geschlossen → Button ist inaktiv
+    els.settingsToggle.classList.remove("active");
+  } else {
+    // wenn geöffnet → Button aktiv (türkis)
+    els.settingsToggle.classList.add("active");
+
+    // Automatisch zur Box scrollen
+    els.settingsToggle.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+});
 
     els.saveSettings.addEventListener("click", function () {
       saveSettings();
