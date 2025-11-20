@@ -26,40 +26,41 @@
     }
 
     /* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-       NEUER CODE FÜR DIE CHECKBOX-BUTTONS
-       (hier einfach drin lassen, nichts ändern)
+       NEUE SCHÖNE BUTTON-STYLES (Kopieren-Button Stil)
        <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
     .toggle-button {
       display: inline-block;
-      padding: 10px 16px;
-      border-radius: 10px;
-      border: 2px solid var(--accent);
-      background: transparent;
-      color: var(--accent);
+      padding: 7px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+      color: #fff;
       font-weight: 600;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       cursor: pointer;
       user-select: none;
-      transition: 0.2s;
+      transition: all 0.2s ease;
     }
 
-/* Checkbox verstecken */
-input[type="checkbox"] {
-  display: none;
-}
+    /* Checkbox ausblenden */
+    input[type="checkbox"] {
+      display: none;
+    }
 
-/* Wenn Checkbox angehakt → Button aktiv */
-input[type="checkbox"]:checked + .toggle-button {
-  background: var(--accent);
-  color: #111;
-  border-color: var(--accent);
-}
+    /* Aktiv */
+    input[type="checkbox"]:checked + .toggle-button {
+      background: linear-gradient(135deg, var(--accent), #2ba57a);
+      color: #111;
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+    }
 
-    /* Hover-Effekt */
+    /* Hover */
     .toggle-button:hover {
-      background: rgba(61, 216, 163, 0.15);
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.25);
     }
-    /* >>>>>>>>>>>>> ENDE NEUER CODE <<<<<<<<<<<<< */
+    /* >>>>>>>>>>>>> ENDE NEUE BUTTON-STYLES <<<<<<<<<<<<< */
 
 
     * {
