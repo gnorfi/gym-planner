@@ -598,33 +598,6 @@
         max-width: 100%;
       }
     }
-    /* SETTINGS-BUTTON wie die Toggle-Buttons */
-.settings-main-button {
-  display: inline-block;
-  padding: 10px 18px;
-  border-radius: 999px;
-  border: 2px solid var(--accent);
-  background: transparent;
-  color: var(--accent);
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-  user-select: none;
-  transition: 0.25s;
-  margin: 0 auto;
-}
-
-/* Aktiv (geöffnet) */
-.settings-main-button.active {
-  background: var(--accent);
-  color: #111;
-  border-color: var(--accent);
-}
-
-/* Hover */
-.settings-main-button:hover {
-  background: rgba(61, 216, 163, 0.18);
-}
   </style>
 </head>
 <body>
@@ -743,11 +716,10 @@
         <div>
           <div class="card-title">Einstellungen</div>
         </div>
-        <div style="display:flex; justify-content:center; margin-top:10px;">
-  <button id="settingsMainButton" class="settings-main-button" type="button">
-    Einstellungen
-  </button>
-</div>
+        <div class="settings-toggle" id="settingsToggle">
+          <div class="settings-toggle-icon" id="settingsToggleIcon">+</div>
+          <span>Einstellungen öffnen</span>
+        </div>
       </div>
 
       <div class="settings-body" id="settingsBody">
@@ -870,7 +842,8 @@
       planButton: document.getElementById("planButton"),
       mainMessage: document.getElementById("mainMessage"),
       planOutput: document.getElementById("planOutput"),
-      els.settingsMainButton = document.getElementById("settingsMainButton");
+      settingsToggle: document.getElementById("settingsToggle"),
+      settingsToggleIcon: document.getElementById("settingsToggleIcon"),
       settingsBody: document.getElementById("settingsBody"),
       driveTo: document.getElementById("driveTo"),
       driveBack: document.getElementById("driveBack"),
@@ -2085,18 +2058,15 @@
       });
     });
 
-    els.settingsMainButton.addEventListener("click", function () {
-  const isOpen = els.settingsBody.style.display === "block";
-
-  if (isOpen) {
-    els.settingsBody.style.display = "none";
-    els.settingsMainButton.classList.remove("active");
-  } else {
-    els.settingsBody.style.display = "block";
-    els.settingsMainButton.classList.add("active");
-    els.settingsBody.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-});
+    els.settingsToggle.addEventListener("click", function () {
+      const open = els.settingsBody.style.display === "block";
+      els.settingsBody.style.display = open ? "none" : "block";
+      els.settingsToggleIcon.textContent = open ? "+" : "–";
+      const span = els.settingsToggle.querySelector("span");
+      if (span) {
+        span.textContent = open ? "Einstellungen öffnen" : "Einstellungen schließen";
+      }
+    });
 
     els.saveSettings.addEventListener("click", function () {
       saveSettings();
