@@ -1,2152 +1,259 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Gym-Planner</title>
+
+  <!-- App Manifest + Icon -->
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/app-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Viewport -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    :root {
-      --bg: #101010;
-      --bg-card: #181818;
-      --bg-card-alt: #202020;
-      --accent: #3dd8a3;
-      --accent-soft: rgba(3, 216, 163, 0.12);
-      --text: #f5f5f5;
-      --text-muted: #aaaaaa;
-      --danger: #ff6b6b;
-      --border: #333333;
-      --radius-lg: 16px;
-      --radius-md: 10px;
-      --shadow-soft: 0 18px 35px rgba(0, 0, 0, 0.5);
-    }
 
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      padding: 16px 12px 24px;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-      background: radial-gradient(circle at top, #181818 0, #050505 60%);
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .app {
-      max-width: 520px;
-      margin: 0 auto;
-    }
-
-    h1 {
-      font-size: 1.4rem;
-      margin: 0 0 10px;
-      font-weight: 650;
-      letter-spacing: 0.02em;
-      text-align: center;
-    }
-
-    .card {
-      background: var(--bg-card);
-      border-radius: var(--radius-lg);
-      padding: 14px 14px 16px;
-      box-shadow: var(--shadow-soft);
-      border: 1px solid rgba(255, 255, 255, 0.03);
-      margin-bottom: 14px;
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-
-    .card-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-    }
-
-    #timeSection .card-header,
-    #planSection .card-header {
-      justify-content: center;
-    }
-
-    #timeSection .card-title,
-    #planSection .card-title {
-      text-align: center;
-      width: 100%;
-    }
-
-    .flex-row {
-      display: flex;
-      gap: 10px;
-    }
-
-    .flex-1 {
-      flex: 1;
-    }
-
-    label {
-      display: block;
-      font-size: 0.8rem;
-      margin-bottom: 4px;
-      color: var(--text-muted);
-    }
-
-    .center-label {
-      text-align: center;
-    }
-
-    input[type="time"],
-    input[type="text"] {
-      width: 100%;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-      background: var(--bg-card-alt);
-      color: var(--text);
-      font-size: 0.9rem;
-      outline: none;
-      display: block;
-    }
-
-    input[type="time"] {
-      -webkit-appearance: none;
-      appearance: none;
-      padding: 0 10px;
-      height: 40px;
-      line-height: 40px;
-      text-align: center;
-    }
-
-    input[type="text"] {
-      padding: 6px 10px;
-      height: 36px;
-    }
-
-    input[type="time"]:focus,
-    input[type="text"]:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent-soft);
-    }
-
-    select {
-      width: 100%;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-      background: var(--bg-card-alt);
-      color: var(--text);
-      font-size: 0.9rem;
-      padding: 6px 10px;
-      height: 36px;
-      outline: none;
-    }
-
-    select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent-soft);
-    }
-
-    .time-input {
-      max-width: 140px;
-      margin: 0 auto;
-      text-align: center;
-    }
-
-    .toggle-block {
-      margin-top: 12px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .checkbox {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      flex: 0 0 auto;
-    }
-
-    .checkbox input {
-      accent-color: var(--accent);
-      width: 18px;
-      height: 18px;
-    }
-
-    .sauna-inline-row {
-      display: none;
-      margin-top: 8px;
-      gap: 10px;
-      justify-content: space-between;
-      flex-wrap: wrap;
-    }
-
-    .inline-input {
-      max-width: 120px;
-      margin: 0 auto;
-      text-align: center;
-      display: block;
-    }
-
-    .sauna-sessions {
-      margin-top: 6px;
-      display: none;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .sauna-session-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.78rem;
-      color: var(--text-muted);
-    }
-
-    .sauna-session-label {
-      min-width: 70px;
-    }
-
-    .sauna-session-row .inline-input {
-      max-width: 80px;
-    }
-
-    button {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 999px;
-      border: none;
-      font-size: 0.95rem;
-      font-weight: 600;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-      background: linear-gradient(135deg, var(--accent), #2ba57a);
-      color: #020202;
-      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.6);
-    }
-
-    button:active {
-      transform: translateY(1px) scale(0.99);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7);
-    }
-
-    .primary-button {
-      margin-top: 20px;
-    }
-
-    .small-button {
-      width: auto;
-      padding: 6px 10px;
-      font-size: 0.75rem;
-      text-transform: none;
-      letter-spacing: 0;
-      margin: 0;
-      background: transparent;
-      color: var(--text-muted);
-      box-shadow: none;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-    }
-
-    .small-button:active {
-      transform: none;
-      box-shadow: none;
-      background: rgba(255, 255, 255, 0.04);
-    }
-
-    .copy-container {
-      text-align: center;
-      margin-top: 10px;
-      display: none;
-    }
-
-    .copy-button {
-      width: auto;
-      padding: 8px 18px;
-      border-radius: 999px;
-      border: none;
-      font-size: 0.85rem;
-      font-weight: 600;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-      background: linear-gradient(135deg, var(--accent), #2ba57a);
-      color: #020202;
-      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6);
-    }
-
-    .settings-toggle {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .settings-toggle-icon {
-      width: 16px;
-      height: 16px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.7rem;
-      opacity: 0.8;
-    }
-
-    .settings-body {
-      margin-top: 10px;
-      border-top: 1px solid var(--border);
-      padding-top: 10px;
-      display: none;
-    }
-
-    .settings-groups {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .settings-group-title {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #dddddd;
-      margin-bottom: 4px;
-    }
-
-    .settings-group {
-      padding-bottom: 4px;
-      border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
-    }
-
-    .settings-group:last-child {
-      border-bottom: none;
-    }
-
-    .settings-field {
-      margin-bottom: 6px;
-    }
-
-    .settings-footer {
-      margin-top: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .settings-note {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-    }
-
-    .ratio-row {
-      margin-top: 10px;
-    }
-
-    .ratio-label {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-      gap: 4px;
-      text-align: center;
-    }
-
-    .accent-text {
-      color: var(--accent);
-      font-weight: 500;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      -webkit-appearance: none;
-      appearance: none;
-      height: 8px;
-      border-radius: 999px;
-      background: #333;
-      outline: none;
-      margin-top: 2px;
-      margin-bottom: 4px;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 0 7px var(--accent-soft);
-      cursor: pointer;
-      border: none;
-    }
-
-    input[type="range"]::-moz-range-thumb {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: var(--accent);
-      border: none;
-      box-shadow: 0 0 0 7px var(--accent-soft);
-      cursor: pointer;
-    }
-
-    .message {
-      margin-top: 8px;
-      font-size: 0.8rem;
-    }
-
-    .message.error {
-      color: var(--danger);
-    }
-
-    .message.info {
-      color: var(--text-muted);
-    }
-
-    .output-card {
-      margin-top: 6px;
-      background: linear-gradient(145deg, var(--bg-card), #111111);
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      padding: 10px 12px 12px;
-    }
-
-    .timeline {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      font-size: 0.86rem;
-    }
-
-    .timeline-item {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-      padding: 4px 0;
-      border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
-      border-left: 3px solid rgba(255, 255, 255, 0.16);
-      padding-left: 8px;
-      transition: margin-top 0.1s ease, padding-top 0.1s ease;
-    }
-
-    .timeline-item:last-child {
-      border-bottom: none;
-    }
-
-    .timeline-item.group-start {
-      margin-top: 10px;
-      padding-top: 8px;
-      border-top: 1px solid rgba(255, 255, 255, 0.12);
-    }
-
-    .timeline-header {
-      margin-top: 10px;
-      padding-top: 6px;
-      padding-bottom: 2px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: #dddddd;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      border-top: 1px solid rgba(255, 255, 255, 0.15);
-    }
-
-    .time {
-      font-feature-settings: "tnum" 1, "lnum" 1;
-      font-variant-numeric: tabular-nums;
-      min-width: 52px;
-      color: var(--accent);
-      font-weight: 500;
-    }
-
-    .label {
-      flex: 1;
-    }
-
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 4px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-
-    .summary-highlight {
-      color: var(--accent);
-      font-weight: 500;
-    }
-
-    .toast-overlay {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-      z-index: 999;
-      background: radial-gradient(circle at center, rgba(0, 0, 0, 0.4), transparent 55%);
-    }
-
-    .toast-overlay.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .toast-bubble {
-      background: rgba(15, 15, 15, 0.96);
-      padding: 14px 22px;
-      border-radius: 999px;
-      box-shadow: var(--shadow-soft);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 0.9rem;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      max-width: 90%;
-    }
-
-    .toast-icon {
-      width: 20px;
-      height: 20px;
-      border-radius: 999px;
-      border: 1px solid var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.8rem;
-      color: var(--accent);
-    }
-
-    #saunaValidation {
-      font-size: 0.75rem;
-      text-align: center;
-    }
-
-    @media (max-width: 380px) {
-      body {
-        padding: 12px 8px 20px;
-      }
-      .card {
-        padding: 12px;
-      }
-      .flex-row {
-        flex-direction: column;
-      }
-      .sauna-inline-row {
-        flex-direction: column;
-      }
-      .time-input {
-        max-width: 100%;
-      }
-      .inline-input {
-        max-width: 100%;
-      }
-    }
-  </style>
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="app.css">
 </head>
+
 <body>
-  <div class="app">
-    <header>
+  <div id="app">
+
+    <!-- HEADER -->
+    <header class="app-header">
       <h1>Gym-Planner</h1>
     </header>
 
-    <!-- Haupt-Eingaben -->
-    <section class="card" id="timeSection">
-      <div class="card-header">
-        <div class="card-title">Zeitfenster</div>
+    <!-- ============================
+         SECTION: Zeitfenster
+    ============================= -->
+    <section class="card" id="section-time">
+
+      <h2 class="section-title">Zeitfenster</h2>
+
+      <!-- Reverse Mode Button -->
+      <div class="toggle-row">
+        <button id="btn-reverse" class="toggle-button" data-active="false">
+          Reverse-Modus
+        </button>
       </div>
 
-      <!-- Reverse-Modus -->
-      <div class="toggle-block" id="reverseBlock">
-        <label class="checkbox">
-          <input type="checkbox" id="reverseEnabled">
-          <span>Reverse-Modus</span>
-        </label>
-      </div>
-
-      <div class="flex-row">
-        <div class="flex-1">
-          <label for="startTime" class="center-label">Abfahrt</label>
-          <input type="time" id="startTime" class="time-input" required>
+      <!-- Abfahrt / Zuhause -->
+      <div class="row two-columns">
+        <div class="col">
+          <label class="label-center">Abfahrt</label>
+          <input type="time" id="time-start" class="time-input">
         </div>
-        <div class="flex-1">
-          <label for="endTime" class="center-label">Zuhause</label>
-          <input type="time" id="endTime" class="time-input" required>
+
+        <div class="col">
+          <label class="label-center">Zuhause</label>
+          <input type="time" id="time-end" class="time-input">
         </div>
       </div>
 
-      <!-- Cardio-Block -->
-      <div class="toggle-block" id="cardioBlock">
-        <label class="checkbox">
-          <input type="checkbox" id="cardioEnabled" checked>
-          <span>Cardio einplanen</span>
-        </label>
+      <!-- Trainingszeit (Reverse) -->
+      <div id="reverse-training-container" class="reverse-block hidden">
+        <label class="label-center">Trainingszeit gesamt</label>
+        <select id="reverse-train-total" class="picker"></select>
+      </div>
+
+      <!-- Cardio Button -->
+      <div class="toggle-row">
+        <button id="btn-cardio" class="toggle-button" data-active="true">
+          Cardio einplanen
+        </button>
       </div>
 
       <!-- Verhältnis-Slider -->
-      <div class="ratio-row" id="ratioRow">
-        <div class="ratio-label">
-          <span>Verhältnis Kraft / Cardio</span>
-          <span id="ratioInfo">erst nach der ersten Berechnung sinnvoll nutzbar</span>
+      <div id="ratio-container" class="ratio-container">
+        <label class="ratio-label">Verhältnis Kraft / Cardio</label>
+        <div id="ratio-info" class="ratio-info muted">
+          erst nach der ersten Berechnung sinnvoll nutzbar
         </div>
-        <input type="range" id="ratioSlider" min="0" max="60" step="1" value="30">
+        <input type="range" id="ratio-slider" min="0" max="60" value="30" step="1">
       </div>
 
-      <!-- Trainingszeit gesamt (nur Reverse-Modus relevant) -->
-      <div id="trainTotalRow" style="display:none; margin-top:8px;">
-        <label for="trainTotal" class="center-label">Trainingszeit gesamt (min)</label>
-        <select id="trainTotal" class="inline-input"></select>
+      <!-- Sauna Button -->
+      <div class="toggle-row">
+        <button id="btn-sauna" class="toggle-button" data-active="false">
+          Sauna einplanen
+        </button>
       </div>
 
-      <!-- Sauna-Block -->
-      <div class="toggle-block" id="saunaBlock">
-        <label class="checkbox">
-          <input type="checkbox" id="saunaEnabled">
-          <span>Sauna einplanen</span>
-        </label>
-      </div>
+      <!-- Sauna Inline Block -->
+      <div id="sauna-inline" class="sauna-inline hidden">
+        <div class="inline-block">
+          <label class="label-center">Sauna (min)</label>
+          <select id="sauna-dur" class="picker"></select>
+        </div>
 
-      <!-- Sauna Inline-Dauer + Anzahl -->
-      <div class="sauna-inline-row" id="saunaInlineRow">
-        <div class="flex-1">
-          <label for="saunaDurationInline" class="center-label">Sauna (min)</label>
-          <select id="saunaDurationInline" class="inline-input"></select>
+        <div class="inline-block">
+          <label class="label-center">Relax (min)</label>
+          <select id="relax-dur" class="picker"></select>
         </div>
-        <div class="flex-1">
-          <label for="relaxDurationInline" class="center-label">Relax (min)</label>
-          <select id="relaxDurationInline" class="inline-input"></select>
-        </div>
-        <div class="flex-1">
-          <label for="saunaCountInline" class="center-label">Gänge</label>
-          <select id="saunaCountInline" class="inline-input"></select>
+
+        <div class="inline-block">
+          <label class="label-center">Gänge</label>
+          <select id="sauna-count" class="picker"></select>
         </div>
       </div>
 
-      <!-- Sauna Only -->
-      <div class="toggle-block" id="saunaOnlyBlock" style="display:none;">
-        <label class="checkbox">
-          <input type="checkbox" id="saunaOnly">
-          <span>Sauna only</span>
-        </label>
+      <!-- Sauna Only Button -->
+      <div id="sauna-only-row" class="toggle-row hidden">
+        <button id="btn-sauna-only" class="toggle-button" data-active="false">
+          Sauna only
+        </button>
       </div>
 
-      <div id="saunaValidation" class="message error"></div>
+      <!-- Dynamische Sauna-Gang-Konfiguration -->
+      <div id="sauna-sessions" class="sauna-sessions hidden"></div>
 
-      <div class="sauna-sessions" id="saunaSessionsContainer"></div>
+      <!-- Sauna Validierung -->
+      <div id="sauna-validation" class="validation-msg"></div>
 
-      <button id="planButton" class="primary-button" type="button" onclick="calculatePlan()">Plan berechnen</button>
-      <div id="mainMessage" class="message"></div>
+      <!-- Berechnen Button -->
+      <button id="btn-calc" class="primary-button">Berechnen</button>
+
+      <div id="msg-main" class="main-msg"></div>
     </section>
 
-    <!-- Ausgabe -->
-    <section class="card" id="planSection">
-      <div class="card-header">
-        <div class="card-title">Zeitplan</div>
+
+    <!-- ============================
+         SECTION: Zeitplan
+    ============================= -->
+    <section class="card" id="section-plan">
+      <h2 class="section-title">Zeitplan</h2>
+
+      <div id="plan-output" class="plan-output">
+        <div class="placeholder muted">
+          Noch kein Plan berechnet.
+        </div>
       </div>
 
-      <div id="planOutput" class="output-card">
-        <div class="message info">Noch kein Plan berechnet. Starte oben mit Abfahrt & Zuhause-Zeit.</div>
-      </div>
-
-      <div id="copyContainer" class="copy-container">
-        <button id="copyButton" type="button" class="copy-button">Kopieren</button>
-        <div id="copyMessage" class="message"></div>
+      <div class="copy-area hidden" id="copy-area">
+        <button id="btn-copy" class="copy-button">Kopieren</button>
+        <div id="copy-info" class="copy-info"></div>
       </div>
     </section>
 
-    <!-- Einstellungen -->
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">Einstellungen</div>
-        </div>
-        <div class="settings-toggle" id="settingsToggle">
-          <div class="settings-toggle-icon" id="settingsToggleIcon">+</div>
-          <span>Einstellungen öffnen</span>
-        </div>
+
+    <!-- ============================
+         SECTION: Einstellungen
+    ============================= -->
+    <section class="card" id="section-settings">
+      <div class="settings-header">
+        <h2 class="section-title">Einstellungen</h2>
+
+        <button id="btn-settings" class="accordion-button" data-open="false">
+          Einstellungen
+        </button>
       </div>
 
-      <div class="settings-body" id="settingsBody">
-        <div class="settings-groups">
-          <div class="settings-group">
-            <div class="settings-group-title">Fahrten</div>
-            <div class="settings-field">
-              <label for="driveTo">Fahrt ins Gym (min)</label>
-              <select id="driveTo"></select>
+      <div id="settings-body" class="settings-body hidden">
+
+        <!-- Fahrten -->
+        <div class="settings-group">
+          <h3 class="settings-subtitle">Fahrten</h3>
+          <div class="row two-columns">
+            <div class="col">
+              <label>Fahrt ins Gym</label>
+              <select id="set-drive-in" class="picker"></select>
             </div>
-            <div class="settings-field">
-              <label for="driveBack">Heimfahrt (min)</label>
-              <select id="driveBack"></select>
+            <div class="col">
+              <label>Heimfahrt</label>
+              <select id="set-drive-out" class="picker"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kleidungswechsel -->
+        <div class="settings-group">
+          <h3 class="settings-subtitle">Kleidungswechsel</h3>
+          <div class="row two-columns">
+            <div class="col">
+              <label>Umziehen vor Training</label>
+              <select id="set-change-before" class="picker"></select>
+            </div>
+            <div class="col">
+              <label>Umziehen nach Training</label>
+              <select id="set-change-after" class="picker"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Training -->
+        <div class="settings-group">
+          <h3 class="settings-subtitle">Training</h3>
+          <label>Pause zwischen Kraft & Cardio</label>
+          <select id="set-break" class="picker"></select>
+        </div>
+
+        <!-- Sauna -->
+        <div class="settings-group">
+          <h3 class="settings-subtitle">Saunagang</h3>
+          <div class="row two-columns">
+            <div class="col">
+              <label>Dauer Saunagang</label>
+              <select id="set-sauna-dur" class="picker"></select>
+            </div>
+            <div class="col">
+              <label>Relax</label>
+              <select id="set-relax-dur" class="picker"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Duschen -->
+        <div class="settings-group">
+          <h3 class="settings-subtitle">Duschgänge</h3>
+          <div class="row two-columns">
+            <div class="col">
+              <label>Abduschen vor Sauna</label>
+              <select id="set-pre-sauna" class="picker"></select>
+            </div>
+            <div class="col">
+              <label>Abduschen nach Sauna</label>
+              <select id="set-post-sauna" class="picker"></select>
             </div>
           </div>
 
-          <div class="settings-group">
-            <div class="settings-group-title">Kleidungswechsel</div>
-            <div class="settings-field">
-              <label for="changeBefore">Umziehen vor Training (min)</label>
-              <select id="changeBefore"></select>
-            </div>
-            <div class="settings-field">
-              <label for="changeAfter">Umziehen nach Training (min)</label>
-              <select id="changeAfter"></select>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-title">Training</div>
-            <div class="settings-field">
-              <label for="breakBetween">Pause zwischen Kraft und Cardio (min)</label>
-              <select id="breakBetween"></select>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-title">Saunagang</div>
-            <div class="settings-field">
-              <label for="saunaDuration">Dauer Saunagang (Standard, min)</label>
-              <select id="saunaDuration"></select>
-            </div>
-            <div class="settings-field">
-              <label for="relaxDuration">Relax (Standard, min)</label>
-              <select id="relaxDuration"></select>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-title">Duschgänge</div>
-            <div class="settings-field">
-              <label for="preSaunaShower">Abduschen vor Sauna (min)</label>
-              <select id="preSaunaShower"></select>
-            </div>
-            <div class="settings-field">
-              <label for="postSaunaShower">Abduschen nach Saunagang (min)</label>
-              <select id="postSaunaShower"></select>
-            </div>
-            <div class="settings-field">
-              <label for="showerAfter">Duschen nach Training (und Sauna) (min)</label>
-              <select id="showerAfter"></select>
-            </div>
-          </div>
+          <label>Duschen nach Training</label>
+          <select id="set-final-shower" class="picker"></select>
         </div>
 
         <div class="settings-footer">
-          <button class="small-button" id="resetDefaults" type="button">Standardwerte laden</button>
-          <button class="small-button" id="saveSettings" type="button">Einstellungen speichern</button>
-          <div class="settings-note">
-            Werte werden lokal auf deinem Gerät gespeichert.
-          </div>
+          <button id="btn-defaults" class="small-button">Standardwerte</button>
+          <button id="btn-save" class="small-button">Speichern</button>
+          <p class="note">Alle Werte werden lokal gespeichert.</p>
         </div>
       </div>
     </section>
+
+
+    <!-- ============================
+         SECTION: Version History
+    ============================= -->
+    <section class="card" id="section-version">
+      <h2 class="section-title">Version</h2>
+
+      <button id="btn-version" class="accordion-button" data-open="false">
+        Version anzeigen
+      </button>
+
+      <div id="version-body" class="version-body hidden">
+        <div id="version-content"></div>
+      </div>
+    </section>
+
+
+    <!-- Toast -->
+    <div id="toast" class="toast hidden"></div>
+
   </div>
 
-  <!-- Toast / Bubble Overlay -->
-  <div id="toastOverlay" class="toast-overlay">
-    <div class="toast-bubble">
-      <span class="toast-icon">✔</span>
-      <span id="toastMessage">Einstellungen gespeichert</span>
-    </div>
-  </div>
+  <!-- JavaScript -->
+  <script src="app.js"></script>
 
-    <script>
-    const defaultSettings = {
-      driveTo: 10,
-      driveBack: 10,
-      changeBefore: 5,
-      preSaunaShower: 5,
-      saunaDuration: 15,
-      postSaunaShower: 5,
-      relaxDuration: 15,
-      showerAfter: 5,
-      changeAfter: 10,
-      breakBetween: 5
-    };
-
-    const SETTINGS_KEY = "gymPlannerSettings_v1";
-
-    const els = {
-      startTime: document.getElementById("startTime"),
-      endTime: document.getElementById("endTime"),
-      reverseEnabled: document.getElementById("reverseEnabled"),
-      trainTotal: document.getElementById("trainTotal"),
-      cardioEnabled: document.getElementById("cardioEnabled"),
-      saunaEnabled: document.getElementById("saunaEnabled"),
-      saunaOnly: document.getElementById("saunaOnly"),
-      cardioBlock: document.getElementById("cardioBlock"),
-      saunaInlineRow: document.getElementById("saunaInlineRow"),
-      saunaOnlyBlock: document.getElementById("saunaOnlyBlock"),
-      saunaDurationInline: document.getElementById("saunaDurationInline"),
-      relaxDurationInline: document.getElementById("relaxDurationInline"),
-      saunaCountInline: document.getElementById("saunaCountInline"),
-      saunaSessionsContainer: document.getElementById("saunaSessionsContainer"),
-      saunaValidation: document.getElementById("saunaValidation"),
-      ratioRow: document.getElementById("ratioRow"),
-      ratioSlider: document.getElementById("ratioSlider"),
-      ratioInfo: document.getElementById("ratioInfo"),
-      planButton: document.getElementById("planButton"),
-      mainMessage: document.getElementById("mainMessage"),
-      planOutput: document.getElementById("planOutput"),
-      settingsToggle: document.getElementById("settingsToggle"),
-      settingsToggleIcon: document.getElementById("settingsToggleIcon"),
-      settingsBody: document.getElementById("settingsBody"),
-      driveTo: document.getElementById("driveTo"),
-      driveBack: document.getElementById("driveBack"),
-      changeBefore: document.getElementById("changeBefore"),
-      preSaunaShower: document.getElementById("preSaunaShower"),
-      saunaDuration: document.getElementById("saunaDuration"),
-      postSaunaShower: document.getElementById("postSaunaShower"),
-      relaxDuration: document.getElementById("relaxDuration"),
-      showerAfter: document.getElementById("showerAfter"),
-      changeAfter: document.getElementById("changeAfter"),
-      breakBetween: document.getElementById("breakBetween"),
-      saveSettings: document.getElementById("saveSettings"),
-      resetDefaults: document.getElementById("resetDefaults"),
-      copyContainer: document.getElementById("copyContainer"),
-      copyButton: document.getElementById("copyButton"),
-      copyMessage: document.getElementById("copyMessage")
-    };
-
-    const toastOverlay = document.getElementById("toastOverlay");
-    const toastMessage = document.getElementById("toastMessage");
-    let toastDismissCallback = null;
-    let toastTimeout = null;
-
-    let currentSettings = { ...defaultSettings };
-    let lastPlan = null;
-    let lastCopyText = "";
-    let reverseAnchor = "start"; // "start" oder "end"
-
-    function toInt(value, fallback) {
-      const n = parseInt(value, 10);
-      return Number.isFinite(n) && n >= 0 ? n : fallback;
-    }
-
-    function parseTimeToMinutes(value) {
-      if (!value || !/^\d{2}:\d{2}$/.test(value)) return null;
-      const [hStr, mStr] = value.split(":");
-      const h = parseInt(hStr, 10);
-      const m = parseInt(mStr, 10);
-      if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
-      if (h < 0 || h > 23 || m < 0 || m > 59) return null;
-      return h * 60 + m;
-    }
-
-    function formatMinutesToTime(mins) {
-      const day = 24 * 60;
-      mins = ((mins % day) + day) % day;
-      const h = Math.floor(mins / 60);
-      const m = mins % 60;
-      const hh = h.toString().padStart(2, "0");
-      const mm = m.toString().padStart(2, "0");
-      return hh + ":" + mm;
-    }
-
-    // -------- Picker-Helfer mit Min/Max/Step --------
-    function populateMinuteSelect(select, min, max, step) {
-      if (!select) return;
-      select.innerHTML = "";
-      for (let v = min; v <= max; v += step) {
-        const opt = document.createElement("option");
-        opt.value = String(v);
-        opt.textContent = v + " min";
-        select.appendChild(opt);
-      }
-    }
-
-    function populateCountSelect(select, min, max) {
-      if (!select) return;
-      select.innerHTML = "";
-      for (let i = min; i <= max; i++) {
-        const opt = document.createElement("option");
-        opt.value = String(i);
-        opt.textContent = String(i);
-        select.appendChild(opt);
-      }
-    }
-
-    function initMinuteSelects() {
-      // Einstellungen
-      populateMinuteSelect(els.driveTo, 0, 60, 1);          // Fahrt ins Gym
-      populateMinuteSelect(els.driveBack, 0, 60, 1);        // Heimfahrt
-      populateMinuteSelect(els.changeBefore, 1, 10, 1);     // Umziehen vor Training
-      populateMinuteSelect(els.changeAfter, 1, 10, 1);      // Umziehen nach Training
-      populateMinuteSelect(els.breakBetween, 1, 10, 1);     // Pause zwischen Kraft & Cardio
-      populateMinuteSelect(els.saunaDuration, 5, 25, 1);    // Dauer Sauna-Gang
-      populateMinuteSelect(els.relaxDuration, 0, 25, 1);    // Relax
-      populateMinuteSelect(els.preSaunaShower, 0, 5, 1);    // Abduschen vor Sauna
-      populateMinuteSelect(els.postSaunaShower, 0, 5, 1);   // Abduschen nach Sauna
-      populateMinuteSelect(els.showerAfter, 0, 10, 1);      // Duschen nach Training
-
-      // Inline Sauna
-      populateMinuteSelect(els.saunaDurationInline, 5, 25, 1); // 5–25
-      populateMinuteSelect(els.relaxDurationInline, 0, 25, 1); // 0–25
-      populateCountSelect(els.saunaCountInline, 1, 5);         // 1–5 Gänge
-
-      // Trainingszeit gesamt im Reverse-Modus: 5–300 in 5er-Schritten
-      populateMinuteSelect(els.trainTotal, 5, 300, 5);
-    }
-
-    function loadSettings() {
-      try {
-        const stored = localStorage.getItem(SETTINGS_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          currentSettings = { ...defaultSettings, ...parsed };
-        }
-      } catch (e) {
-        console.warn("Konnte Einstellungen nicht laden:", e);
-      }
-      applySettingsToInputs();
-    }
-
-    function saveSettings() {
-      const s = {
-        driveTo: toInt(els.driveTo.value, defaultSettings.driveTo),
-        driveBack: toInt(els.driveBack.value, defaultSettings.driveBack),
-        changeBefore: toInt(els.changeBefore.value, defaultSettings.changeBefore),
-        preSaunaShower: toInt(els.preSaunaShower.value, defaultSettings.preSaunaShower),
-        saunaDuration: toInt(els.saunaDuration.value, defaultSettings.saunaDuration),
-        postSaunaShower: toInt(els.postSaunaShower.value, defaultSettings.postSaunaShower),
-        relaxDuration: toInt(els.relaxDuration.value, defaultSettings.relaxDuration),
-        showerAfter: toInt(els.showerAfter.value, defaultSettings.showerAfter),
-        changeAfter: toInt(els.changeAfter.value, defaultSettings.changeAfter),
-        breakBetween: toInt(els.breakBetween.value, defaultSettings.breakBetween)
-      };
-      currentSettings = s;
-      try {
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
-      } catch (e) {
-        console.warn("Konnte Einstellungen nicht speichern:", e);
-      }
-    }
-
-    function applySettingsToInputs() {
-      els.driveTo.value = String(currentSettings.driveTo);
-      els.driveBack.value = String(currentSettings.driveBack);
-      els.changeBefore.value = String(currentSettings.changeBefore);
-      els.preSaunaShower.value = String(currentSettings.preSaunaShower);
-      els.saunaDuration.value = String(currentSettings.saunaDuration);
-      els.postSaunaShower.value = String(currentSettings.postSaunaShower);
-      els.relaxDuration.value = String(currentSettings.relaxDuration);
-      els.showerAfter.value = String(currentSettings.showerAfter);
-      els.changeAfter.value = String(currentSettings.changeAfter);
-      els.breakBetween.value = String(currentSettings.breakBetween);
-    }
-
-    function resetDefaults() {
-      currentSettings = { ...defaultSettings };
-      applySettingsToInputs();
-      try {
-        localStorage.removeItem(SETTINGS_KEY);
-      } catch (e) {
-        console.warn("Konnte Einstellungen nicht löschen:", e);
-      }
-      showMainMessage("Standardwerte geladen.", "info");
-    }
-
-    function setDefaultTimes() {
-      const now = new Date();
-      const minsNow = now.getHours() * 60 + now.getMinutes();
-      let startMins = minsNow + 15;
-      const quarter = 15;
-      startMins = Math.ceil(startMins / quarter) * quarter;
-      const endMins = startMins + 150; // 2,5 h
-
-      els.startTime.value = formatMinutesToTime(startMins);
-      els.endTime.value = formatMinutesToTime(endMins);
-    }
-
-    function showMainMessage(text, type) {
-      els.mainMessage.textContent = text || "";
-      els.mainMessage.className = "message " + (type || "");
-    }
-
-    function showToast(message, onDone) {
-      toastMessage.textContent = message;
-      toastDismissCallback = typeof onDone === "function" ? onDone : null;
-      if (toastTimeout) {
-        clearTimeout(toastTimeout);
-        toastTimeout = null;
-      }
-      toastOverlay.classList.add("visible");
-      toastTimeout = setTimeout(() => {
-        hideToast();
-      }, 2000);
-    }
-
-    function hideToast() {
-      toastOverlay.classList.remove("visible");
-      if (toastTimeout) {
-        clearTimeout(toastTimeout);
-        toastTimeout = null;
-      }
-      if (toastDismissCallback) {
-        const cb = toastDismissCallback;
-        toastDismissCallback = null;
-        cb();
-      }
-    }
-
-    toastOverlay.addEventListener("click", function () {
-      hideToast();
-    });
-
-    function updateSaunaSessionsUI() {
-      const container = els.saunaSessionsContainer;
-      if (!els.saunaEnabled.checked) {
-        container.style.display = "none";
-        container.innerHTML = "";
-        return;
-      }
-
-      let count = toInt(els.saunaCountInline.value, 1);
-      if (count < 1) count = 1;
-      if (count > 5) count = 5;
-      els.saunaCountInline.value = String(count);
-
-      if (count <= 1) {
-        container.style.display = "none";
-        container.innerHTML = "";
-        return;
-      }
-
-      const baseSauna = toInt(els.saunaDurationInline.value, currentSettings.saunaDuration);
-      const baseRelax = toInt(els.relaxDurationInline.value, currentSettings.relaxDuration);
-
-      let html = "";
-      for (let i = 1; i <= count; i++) {
-        html +=
-          '<div class="sauna-session-row">' +
-            '<span class="sauna-session-label">Gang ' + i + ':</span>' +
-            '<span>Sauna</span>' +
-            '<select class="inline-input" id="saunaDur_' + i + '"></select>' +
-            '<span>Relax</span>' +
-            '<select class="inline-input" id="relaxDur_' + i + '"></select>' +
-          '</div>';
-      }
-
-      container.innerHTML = html;
-      container.style.display = "flex";
-
-      for (let i = 1; i <= count; i++) {
-        const sd = document.getElementById("saunaDur_" + i);
-        const rd = document.getElementById("relaxDur_" + i);
-        // gleiche Range wie oben: Sauna 5–25, Relax 0–25
-        populateMinuteSelect(sd, 5, 25, 1);
-        populateMinuteSelect(rd, 0, 25, 1);
-
-        sd.value = String(baseSauna);
-        rd.value = String(baseRelax);
-
-        [sd, rd].forEach(inp => {
-          inp.addEventListener("input", () => {
-            if (lastPlan) calculatePlan();
-          });
-        });
-      }
-    }
-
-    function clearSaunaValidation() {
-      els.saunaValidation.textContent = "";
-    }
-
-    function calculatePlan() {
-      showMainMessage("", "");
-      clearSaunaValidation();
-      els.planOutput.innerHTML = "";
-      els.copyContainer.style.display = "none";
-      els.copyMessage.textContent = "";
-      lastCopyText = "";
-
-      const reverse = els.reverseEnabled.checked;
-
-      if (reverse) {
-        calculatePlanReverse();
-        return;
-      }
-
-      // -------- Forward-Modus --------
-      const start = parseTimeToMinutes(els.startTime.value);
-      const end = parseTimeToMinutes(els.endTime.value);
-
-      if (start === null || end === null) {
-        showMainMessage("Bitte Abfahrtszeit und Zuhause-Zeit im Format HH:MM eingeben.", "error");
-        els.planOutput.innerHTML = '<div class="message error">Keine gültigen Zeiten – Plan konnte nicht berechnet werden.</div>';
-        return;
-      }
-
-      let total = end - start;
-      if (total <= 0) {
-        total += 24 * 60;
-      }
-
-      const s = currentSettings;
-      const cardio = els.cardioEnabled.checked;
-      const sauna = els.saunaEnabled.checked;
-      const saunaOnly = sauna && els.saunaOnly.checked;
-
-      const fixBefore = s.driveTo + s.changeBefore;
-
-      let saunaDurationEffective = s.saunaDuration;
-      let relaxDurationEffective = s.relaxDuration;
-      let saunaCount = 1;
-      let saunaDurations = [];
-      let relaxDurations = [];
-
-      if (sauna) {
-        saunaDurationEffective = toInt(els.saunaDurationInline.value, s.saunaDuration);
-        relaxDurationEffective = toInt(els.relaxDurationInline.value, s.relaxDuration);
-        saunaCount = toInt(els.saunaCountInline.value, 1);
-        if (saunaCount < 1) saunaCount = 1;
-        if (saunaCount > 5) saunaCount = 5;
-        els.saunaCountInline.value = String(saunaCount);
-
-        const container = els.saunaSessionsContainer;
-        if (container && container.children.length && saunaCount > 1) {
-          for (let i = 1; i <= saunaCount; i++) {
-            const sdInput = document.getElementById("saunaDur_" + i);
-            const rdInput = document.getElementById("relaxDur_" + i);
-            saunaDurations.push(
-              sdInput ? toInt(sdInput.value, saunaDurationEffective) : saunaDurationEffective
-            );
-            relaxDurations.push(
-              rdInput ? toInt(rdInput.value, relaxDurationEffective) : relaxDurationEffective
-            );
-          }
-        } else {
-          for (let i = 0; i < saunaCount; i++) {
-            saunaDurations.push(saunaDurationEffective);
-            relaxDurations.push(relaxDurationEffective);
-          }
-        }
-      }
-
-      // SAUNA-ONLY (forward)
-      if (saunaOnly) {
-        const fixAfter = s.showerAfter + s.changeAfter + s.driveBack;
-        const saunaBudget = total - (fixBefore + fixAfter);
-
-        if (saunaBudget <= 0) {
-          showMainMessage(
-            "Dein Zeitfenster ist zu knapp für einen Sauna only Besuch.",
-            "error"
-          );
-          els.planOutput.innerHTML =
-            '<div class="message error">Zeitfenster zu kurz für Sauna only.</div>';
-          return;
-        }
-
-        let saunaTotalWithShowers = s.preSaunaShower;
-        for (let i = 0; i < saunaCount; i++) {
-          saunaTotalWithShowers += saunaDurations[i] + s.postSaunaShower + relaxDurations[i];
-        }
-
-        const diff = saunaTotalWithShowers - saunaBudget;
-
-        if (diff > 0) {
-          els.saunaValidation.textContent =
-            "Deine Sauna-Planung überschreitet dein Zeitfenster um " + diff + " min. Du müsstest entsprechend länger im Gym einplanen.";
-          showMainMessage(
-            "Mit den aktuellen Sauna-Einstellungen passt du nicht in dein Zeitfenster.",
-            "error"
-          );
-          els.planOutput.innerHTML =
-            '<div class="message error">Reduziere Dauer oder Anzahl der Saunagänge.</div>';
-          return;
-        } else if (diff < 0) {
-          const remaining = Math.abs(diff);
-          els.saunaValidation.textContent =
-            "Es wären noch " + remaining + " min für zusätzliche Sauna- oder Relax-Zeit verfügbar.";
-        }
-
-        lastPlan = {
-          saunaOnly: true,
-          mode: "forward",
-          start,
-          end,
-          saunaBudget,
-          sauna,
-          cardio: false,
-          settings: {
-            ...s,
-            saunaDurationEffective,
-            relaxDurationEffective,
-            saunaCount,
-            saunaDurations,
-            relaxDurations
-          }
-        };
-
-        renderPlan();
-        return;
-      }
-
-      // NORMALER TRAININGS-MODUS (forward)
-      let fixAfter;
-      if (sauna) {
-        let saunaRelaxSum = 0;
-        for (let i = 0; i < saunaCount; i++) {
-          saunaRelaxSum += saunaDurations[i] + relaxDurations[i];
-        }
-        fixAfter =
-          s.preSaunaShower +
-          saunaRelaxSum +
-          saunaCount * s.postSaunaShower +
-          s.showerAfter +
-          s.changeAfter +
-          s.driveBack;
-      } else {
-        fixAfter = s.showerAfter + s.changeAfter + s.driveBack;
-      }
-
-      const trainingBudget = total - fixBefore - fixAfter;
-
-      if (trainingBudget <= 0) {
-        showMainMessage(
-          "Dein Zeitfenster ist zu knapp. Verringere Fahrzeiten/Sauna oder verschiebe Abfahrt/Zuhause.",
-          "error"
-        );
-        els.planOutput.innerHTML =
-          '<div class="message error">Benötigte Fixzeiten sind länger als dein gesamtes Zeitfenster.</div>';
-        return;
-      }
-
-      const sliderMax = Math.max(1, trainingBudget);
-      els.ratioSlider.max = sliderMax;
-      els.ratioSlider.step = 1;
-      let sliderValue = parseInt(els.ratioSlider.value, 10);
-      if (!Number.isFinite(sliderValue) || sliderValue < 0 || sliderValue > sliderMax) {
-        sliderValue = Math.floor(sliderMax / 2);
-        els.ratioSlider.value = sliderValue;
-      }
-
-      lastPlan = {
-        saunaOnly: false,
-        mode: "forward",
-        start,
-        end,
-        trainingBudget,
-        cardio,
-        sauna,
-        settings: {
-          ...s,
-          saunaDurationEffective,
-          relaxDurationEffective,
-          saunaCount,
-          saunaDurations,
-          relaxDurations
-        }
-      };
-
-      renderPlan();
-    }
-
-    function calculatePlanReverse() {
-      const s = currentSettings;
-      const cardio = els.cardioEnabled.checked;
-      const sauna = els.saunaEnabled.checked;
-      const saunaOnly = sauna && els.saunaOnly.checked;
-
-      let trainingTotal = toInt(els.trainTotal.value, 0);
-      if (trainingTotal < 5 && !saunaOnly) trainingTotal = 0; // unter 5min ergibt als Training wenig Sinn
-
-      // Sauna-Daten
-      let saunaDurationEffective = s.saunaDuration;
-      let relaxDurationEffective = s.relaxDuration;
-      let saunaCount = 1;
-      let saunaDurations = [];
-      let relaxDurations = [];
-
-      if (sauna) {
-        saunaDurationEffective = toInt(els.saunaDurationInline.value, s.saunaDuration);
-        relaxDurationEffective = toInt(els.relaxDurationInline.value, s.relaxDuration);
-        saunaCount = toInt(els.saunaCountInline.value, 1);
-        if (saunaCount < 1) saunaCount = 1;
-        if (saunaCount > 5) saunaCount = 5;
-        els.saunaCountInline.value = String(saunaCount);
-
-        const container = els.saunaSessionsContainer;
-        if (container && container.children.length && saunaCount > 1) {
-          for (let i = 1; i <= saunaCount; i++) {
-            const sdInput = document.getElementById("saunaDur_" + i);
-            const rdInput = document.getElementById("relaxDur_" + i);
-            saunaDurations.push(
-              sdInput ? toInt(sdInput.value, saunaDurationEffective) : saunaDurationEffective
-            );
-            relaxDurations.push(
-              rdInput ? toInt(rdInput.value, relaxDurationEffective) : relaxDurationEffective
-            );
-          }
-        } else {
-          for (let i = 0; i < saunaCount; i++) {
-            saunaDurations.push(saunaDurationEffective);
-            relaxDurations.push(relaxDurationEffective);
-          }
-        }
-      }
-
-      // Fixzeiten
-      const fixBefore = s.driveTo + s.changeBefore;
-      const fixAfter = s.showerAfter + s.changeAfter + s.driveBack;
-
-      // Trainingsblock (nur wenn nicht Sauna-only)
-      let strengthMinutes = 0;
-      let cardioMinutes = 0;
-      let breakBetween = 0;
-      let trainingBlockTotal = 0;
-
-      if (!saunaOnly && trainingTotal > 0) {
-        // Trainingszeit: 5–300 in 5er-Schritten, Slider spiegelt das
-        let tt = trainingTotal;
-
-        els.ratioSlider.min = 0;
-        els.ratioSlider.max = tt || 1;
-        els.ratioSlider.step = 1;
-
-        let strengthRaw = parseInt(els.ratioSlider.value, 10);
-        if (!Number.isFinite(strengthRaw)) strengthRaw = Math.floor(tt / 2);
-        if (strengthRaw < 0) strengthRaw = 0;
-        if (strengthRaw > tt) strengthRaw = tt;
-        els.ratioSlider.value = strengthRaw;
-
-        if (!cardio) {
-          strengthMinutes = tt;
-          cardioMinutes = 0;
-          breakBetween = 0;
-          trainingBlockTotal = tt;
-        } else {
-          strengthMinutes = strengthRaw;
-          cardioMinutes = tt - strengthRaw;
-          if (strengthMinutes > 0 && cardioMinutes > 0) {
-            breakBetween = s.breakBetween || 0;
-          } else {
-            breakBetween = 0;
-          }
-          trainingBlockTotal = tt + breakBetween;
-        }
-      } else {
-        trainingTotal = 0;
-        strengthMinutes = 0;
-        cardioMinutes = 0;
-        breakBetween = 0;
-        trainingBlockTotal = 0;
-      }
-
-      // Sauna-Block
-      let saunaBlockTotal = 0;
-      if (sauna && saunaCount > 0) {
-        saunaBlockTotal = s.preSaunaShower;
-        for (let i = 0; i < saunaCount; i++) {
-          saunaBlockTotal += (saunaDurations[i] ?? saunaDurationEffective) +
-                             s.postSaunaShower +
-                             (relaxDurations[i] ?? relaxDurationEffective);
-        }
-      }
-
-      const totalDuration = fixBefore + trainingBlockTotal + saunaBlockTotal + fixAfter;
-
-      if (totalDuration <= 0) {
-        showMainMessage("Mit den aktuellen Einstellungen kann kein Zeitplan erstellt werden.", "error");
-        els.planOutput.innerHTML =
-          '<div class="message error">Bitte Trainingszeit oder Saunadaten prüfen.</div>';
-        return;
-      }
-
-      // Abfahrt/Zuhause aus Anchor berechnen
-      let start = parseTimeToMinutes(els.startTime.value);
-      let end = parseTimeToMinutes(els.endTime.value);
-
-      const now = new Date();
-      const nowMinutes = now.getHours() * 60 + now.getMinutes();
-
-      if (reverseAnchor === "end" && end !== null) {
-        start = end - totalDuration;
-      } else {
-        if (start === null && end !== null) {
-          start = end - totalDuration;
-          reverseAnchor = "end";
-        } else if (start === null && end === null) {
-          let base = nowMinutes + 15;
-          const quarter = 15;
-          base = Math.ceil(base / quarter) * quarter;
-          start = base;
-          reverseAnchor = "start";
-        }
-        end = start + totalDuration;
-      }
-
-      els.startTime.value = formatMinutesToTime(start);
-      els.endTime.value = formatMinutesToTime(end);
-
-      lastPlan = {
-        saunaOnly: saunaOnly,
-        mode: "reverse",
-        start,
-        end,
-        trainTotal: trainingTotal,
-        cardio,
-        sauna,
-        settings: {
-          ...s,
-          saunaDurationEffective,
-          relaxDurationEffective,
-          saunaCount,
-          saunaDurations,
-          relaxDurations
-        }
-      };
-
-      renderPlan();
-    }
-
-    function buildCopyTextFromSteps(steps) {
-      const lines = [];
-      const sectionAdded = {
-        Start: false,
-        Training: false,
-        Sauna: false,
-        Abschluss: false
-      };
-
-      lines.push("# Start");
-      sectionAdded.Start = true;
-
-      for (const step of steps) {
-        if (step.header) {
-          const label = step.label;
-          if (label === "Training" || label === "Sauna" || label === "Abschluss") {
-            if (!sectionAdded[label]) {
-              lines.push("");
-              lines.push("# " + label);
-              sectionAdded[label] = true;
-            }
-          }
-        } else {
-          lines.push(step.time + " " + step.label);
-        }
-      }
-
-      return lines.join("\n");
-    }
-
-    function renderPlan() {
-      if (!lastPlan) return;
-
-      if (lastPlan.saunaOnly) {
-        renderSaunaOnlyPlan();
-      } else {
-        renderTrainingSaunaPlan();
-      }
-    }
-
-    function renderSaunaOnlyPlan() {
-      const { start, settings: s } = lastPlan;
-
-      let t = start;
-      const steps = [];
-
-      function addHeader(label) {
-        steps.push({ header: true, label });
-      }
-
-      function add(label, groupKey) {
-        steps.push({
-          time: formatMinutesToTime(t),
-          label,
-          group: groupKey || null
-        });
-      }
-
-      // Start
-      add("Abfahrt", "drive-out");
-      t += s.driveTo;
-
-      add("Ankunft im Gym", "drive-out");
-      t += s.changeBefore;
-
-      // Sauna
-      addHeader("Sauna");
-
-      const count = s.saunaCount;
-      const one = count === 1;
-
-      add("Abduschen vor Sauna", "sauna-pre");
-      t += s.preSaunaShower;
-
-      for (let i = 1; i <= count; i++) {
-        const idx = i - 1;
-        const gSauna = "sauna-session-" + i;
-        const gRelax = "sauna-relax-" + i;
-
-        const saunaLabelStart = one ? "Beginn Saunagang" : "Beginn Saunagang " + i;
-        const saunaLabelEnd = one ? "Ende Saunagang" : "Ende Saunagang " + i;
-        const relaxLabelStart = one ? "Beginn Relax" : "Beginn Relax " + i;
-        const relaxLabelEnd = one ? "Ende Relax" : "Ende Relax " + i;
-        const afterLabel = one ? "Abduschen nach Saunagang" : "Abduschen nach Saunagang " + i;
-
-        add(saunaLabelStart, gSauna);
-        t += s.saunaDurations[idx] ?? s.saunaDurationEffective;
-        add(saunaLabelEnd, gSauna);
-
-        add(afterLabel, gRelax);
-        t += s.postSaunaShower;
-
-        add(relaxLabelStart, gRelax);
-        t += s.relaxDurations[idx] ?? s.relaxDurationEffective;
-        add(relaxLabelEnd, gRelax);
-      }
-
-      // Abschluss
-      addHeader("Abschluss");
-
-      add("Duschen nach Training", "finish-clean");
-      t += s.showerAfter;
-
-      add("Anziehen nach Training", "finish-clean");
-      t += s.changeAfter;
-
-      add("Abfahrt nach Hause", "finish-home");
-      t += s.driveBack;
-
-      add("Zuhause", "finish-home");
-
-      let saunaTotal = 0;
-      for (let i = 0; i < s.saunaCount; i++) {
-        saunaTotal += (s.saunaDurations[i] ?? s.saunaDurationEffective) +
-                      (s.relaxDurations[i] ?? s.relaxDurationEffective);
-      }
-      const saunaCountLabel = s.saunaCount === 1 ? "1 Gang" : s.saunaCount + " Gänge";
-
-      const summaryHtml =
-        '<div class="summary-row">' +
-          '<span>Sauna-Zeit gesamt:</span>' +
-          '<span class="summary-highlight">' + saunaTotal + ' min</span>' +
-        '</div>' +
-        '<div class="summary-row">' +
-          '<span>Saunagänge:</span>' +
-          '<span class="summary-highlight">' + saunaCountLabel + '</span>' +
-        '</div>';
-
-      let html = '<div class="output-card">' + summaryHtml + '<ul class="timeline">';
-
-      let prevGroup = null;
-      for (let i = 0; i < steps.length; i++) {
-        const step = steps[i];
-
-        if (step.header) {
-          html += '<li class="timeline-header">' + step.label + '</li>';
-          continue;
-        }
-
-        const isGroupStart = step.group && step.group !== prevGroup;
-        const groupClass = isGroupStart ? " group-start" : "";
-        prevGroup = step.group || prevGroup;
-
-        html +=
-          '<li class="timeline-item' + groupClass + '">' +
-            '<span class="time">' + step.time + '</span>' +
-            '<span class="label">' + step.label + '</span>' +
-          '</li>';
-      }
-      html += "</ul></div>";
-
-      els.planOutput.innerHTML = html;
-
-      lastCopyText = buildCopyTextFromSteps(steps);
-      els.copyContainer.style.display = "block";
-    }
-
-    function renderTrainingSaunaPlan() {
-      const { start, cardio, sauna, settings: s, mode } = lastPlan;
-
-      let strengthMinutes, cardioMinutes, breakBetween, trainingTimeSegments;
-
-      if (mode === "reverse") {
-        const trainTotal = lastPlan.trainTotal || 0;
-
-        if (!cardio) {
-          strengthMinutes = trainTotal;
-          cardioMinutes = 0;
-          breakBetween = 0;
-          trainingTimeSegments = trainTotal;
-
-          els.ratioSlider.min = 0;
-          els.ratioSlider.max = trainTotal || 1;
-          els.ratioSlider.step = 1;
-          els.ratioSlider.value = trainTotal;
-          els.ratioSlider.disabled = true;
-
-          if (trainTotal > 0) {
-            els.ratioInfo.innerHTML =
-              'Nur Kraft: <span class="accent-text">' + trainingTimeSegments + ' min</span>';
-          } else {
-            els.ratioInfo.textContent = "Keine Trainingszeit geplant.";
-          }
-        } else {
-          let tt = lastPlan.trainTotal || 0;
-          if (tt < 0) tt = 0;
-
-          els.ratioSlider.min = 0;
-          els.ratioSlider.max = tt || 1;
-          els.ratioSlider.step = 1;
-
-          let strengthRaw = parseInt(els.ratioSlider.value, 10);
-          if (!Number.isFinite(strengthRaw)) strengthRaw = Math.floor(tt / 2);
-          if (strengthRaw < 0) strengthRaw = 0;
-          if (strengthRaw > tt) strengthRaw = tt;
-          els.ratioSlider.value = strengthRaw;
-
-          strengthMinutes = strengthRaw;
-          cardioMinutes = tt - strengthRaw;
-          trainingTimeSegments = tt;
-
-          if (strengthMinutes > 0 && cardioMinutes > 0) {
-            breakBetween = s.breakBetween || 0;
-          } else {
-            breakBetween = 0;
-          }
-
-          els.ratioSlider.disabled = false;
-
-          if (strengthMinutes <= 0 && cardioMinutes > 0) {
-            els.ratioInfo.innerHTML =
-              'Nur Cardio: <span class="accent-text">' + cardioMinutes + ' min</span>';
-          } else if (cardioMinutes <= 0 && strengthMinutes > 0) {
-            els.ratioInfo.innerHTML =
-              'Nur Kraft: <span class="accent-text">' + strengthMinutes + ' min</span>';
-          } else if (trainingTimeSegments > 0) {
-            els.ratioInfo.innerHTML =
-              'Kraft: <span class="accent-text">' + strengthMinutes + ' min</span> · ' +
-              'Cardio: <span class="accent-text">' + cardioMinutes + ' min</span>';
-          } else {
-            els.ratioInfo.textContent = "Keine Trainingszeit geplant.";
-          }
-        }
-      } else {
-        const trainingBudget = lastPlan.trainingBudget;
-
-        let strengthRaw = parseInt(els.ratioSlider.value, 10);
-        if (!Number.isFinite(strengthRaw) || strengthRaw < 0) strengthRaw = 0;
-        if (strengthRaw > trainingBudget) strengthRaw = trainingBudget;
-
-        if (!cardio) {
-          breakBetween = 0;
-          strengthMinutes = trainingBudget;
-          cardioMinutes = 0;
-          trainingTimeSegments = trainingBudget;
-          els.ratioSlider.disabled = true;
-          els.ratioInfo.innerHTML =
-            'Nur Kraft: <span class="accent-text">' + trainingTimeSegments + ' min</span>';
-        } else {
-          let cardioRaw = trainingBudget - strengthRaw;
-
-          if (strengthRaw <= 0) {
-            breakBetween = 0;
-            strengthMinutes = 0;
-            cardioMinutes = trainingBudget;
-            trainingTimeSegments = trainingBudget;
-            els.ratioSlider.disabled = false;
-            els.ratioInfo.innerHTML =
-              'Nur Cardio: <span class="accent-text">' + trainingTimeSegments + ' min</span>';
-          } else if (cardioRaw <= 0) {
-            breakBetween = 0;
-            strengthMinutes = trainingBudget;
-            cardioMinutes = 0;
-            trainingTimeSegments = trainingBudget;
-            els.ratioSlider.disabled = false;
-            els.ratioInfo.innerHTML =
-              'Nur Kraft: <span class="accent-text">' + trainingTimeSegments + ' min</span>';
-          } else {
-            breakBetween = s.breakBetween || 0;
-            const segmentsBudget = trainingBudget - breakBetween;
-            if (segmentsBudget <= 0) {
-              showMainMessage(
-                "Zeitfenster zu knapp für die Pause zwischen Kraft und Cardio.",
-                "error"
-              );
-              els.planOutput.innerHTML =
-                '<div class="message error">Zeitfenster zu knapp für Trainings-Pause.</div>';
-              return;
-            }
-
-            const ratio = strengthRaw / trainingBudget;
-            strengthMinutes = Math.round(segmentsBudget * ratio);
-            if (strengthMinutes < 0) strengthMinutes = 0;
-            if (strengthMinutes > segmentsBudget) strengthMinutes = segmentsBudget;
-            cardioMinutes = segmentsBudget - strengthMinutes;
-
-            trainingTimeSegments = segmentsBudget;
-            els.ratioSlider.disabled = false;
-            els.ratioInfo.innerHTML =
-              'Kraft: <span class="accent-text">' + strengthMinutes + ' min</span> · ' +
-              'Cardio: <span class="accent-text">' + cardioMinutes + ' min</span>';
-          }
-        }
-      }
-
-      let t = start;
-      const steps = [];
-
-      function addHeader(label) {
-        steps.push({ header: true, label });
-      }
-
-      function add(label, groupKey) {
-        steps.push({
-          time: formatMinutesToTime(t),
-          label,
-          group: groupKey || null
-        });
-      }
-
-      // Start
-      add("Abfahrt", "drive-out");
-      t += s.driveTo;
-
-      add("Ankunft im Gym", "drive-out");
-      t += s.changeBefore;
-
-      if (trainingTimeSegments > 0) {
-        addHeader("Training");
-      }
-
-      // Kraft
-      if (strengthMinutes > 0) {
-        add("Beginn Kraft-Training", "strength");
-        t += strengthMinutes;
-        add("Ende Kraft-Training", "strength");
-      }
-
-      // Pause zwischen Kraft & Cardio
-      if (strengthMinutes > 0 && cardioMinutes > 0 && breakBetween > 0) {
-        add("Pause zwischen Kraft & Cardio", "training-break");
-        t += breakBetween;
-      }
-
-      // Cardio
-      if (cardioMinutes > 0) {
-        add("Beginn Cardio-Training", "cardio");
-        t += cardioMinutes;
-        add("Ende Cardio-Training", "cardio");
-      }
-
-      // Sauna
-      if (sauna && s.saunaCount > 0) {
-        addHeader("Sauna");
-
-        const count = s.saunaCount;
-        const one = count === 1;
-
-        add("Abduschen vor Sauna", "sauna-1");
-        t += s.preSaunaShower;
-
-        const saunaLabelStart1 = one ? "Beginn Saunagang" : "Beginn Saunagang 1";
-        const saunaLabelEnd1 = one ? "Ende Saunagang" : "Ende Saunagang 1";
-        const relaxLabelStart1 = one ? "Beginn Relax" : "Beginn Relax 1";
-        const relaxLabelEnd1 = one ? "Ende Relax" : "Ende Relax 1";
-        const afterLabel1 = one ? "Abduschen nach Saunagang" : "Abduschen nach Saunagang 1";
-
-        add(saunaLabelStart1, "sauna-1");
-        t += s.saunaDurations[0] ?? s.saunaDurationEffective;
-        add(saunaLabelEnd1, "sauna-1");
-
-        add(afterLabel1, "sauna-relax-1");
-        t += s.postSaunaShower;
-
-        add(relaxLabelStart1, "sauna-relax-1");
-        t += s.relaxDurations[0] ?? s.relaxDurationEffective;
-        add(relaxLabelEnd1, "sauna-relax-1");
-
-        for (let i = 2; i <= count; i++) {
-          const idx = i - 1;
-          const gSauna = "sauna-session-" + i;
-          const gRelax = "sauna-relax-" + i;
-
-          add("Beginn Saunagang " + i, gSauna);
-          t += s.saunaDurations[idx] ?? s.saunaDurationEffective;
-          add("Ende Saunagang " + i, gSauna);
-
-          add("Abduschen nach Saunagang " + i, gRelax);
-          t += s.postSaunaShower;
-
-          add("Beginn Relax " + i, gRelax);
-          t += s.relaxDurations[idx] ?? s.relaxDurationEffective;
-          add("Ende Relax " + i, gRelax);
-        }
-      }
-
-      // Abschluss
-      addHeader("Abschluss");
-
-      add("Duschen nach Training", "finish-clean");
-      t += s.showerAfter;
-
-      add("Anziehen nach Training", "finish-clean");
-      t += s.changeAfter;
-
-      add("Abfahrt nach Hause", "finish-home");
-      t += s.driveBack;
-
-      add("Zuhause", "finish-home");
-
-      const saunaSummaryActive = sauna && s.saunaCount > 0;
-
-      let saunaTotal = 0;
-      if (saunaSummaryActive) {
-        for (let i = 0; i < s.saunaCount; i++) {
-          saunaTotal += (s.saunaDurations[i] ?? s.saunaDurationEffective) +
-                        (s.relaxDurations[i] ?? s.relaxDurationEffective);
-        }
-      }
-      const saunaCountLabel = s.saunaCount === 1 ? "1 Gang" : s.saunaCount + " Gänge";
-
-      let summaryHtml =
-        '<div class="summary-row">' +
-          '<span>Trainings-Zeit gesamt:</span>' +
-          '<span class="summary-highlight">' + (trainingTimeSegments || 0) + ' min</span>' +
-        '</div>' +
-        '<div class="summary-row">' +
-          '<span>Kraft / Cardio (min):</span>' +
-          '<span class="summary-highlight">' + (strengthMinutes || 0) + ' / ' + (cardioMinutes || 0) + '</span>' +
-        '</div>';
-
-      if (saunaSummaryActive) {
-        summaryHtml +=
-          '<div class="summary-row">' +
-            '<span>Sauna-Zeit gesamt:</span>' +
-            '<span class="summary-highlight">' + saunaTotal + ' min</span>' +
-          '</div>' +
-          '<div class="summary-row">' +
-            '<span>Saunagänge:</span>' +
-            '<span class="summary-highlight">' + saunaCountLabel + '</span>' +
-          '</div>';
-      }
-
-      let html = '<div class="output-card">' + summaryHtml + '<ul class="timeline">';
-
-      let prevGroup = null;
-      for (let i = 0; i < steps.length; i++) {
-        const step = steps[i];
-
-        if (step.header) {
-          html += '<li class="timeline-header">' + step.label + '</li>';
-          continue;
-        }
-
-        const isGroupStart = step.group && step.group !== prevGroup;
-        const groupClass = isGroupStart ? " group-start" : "";
-        prevGroup = step.group || prevGroup;
-
-        html +=
-          '<li class="timeline-item' + groupClass + '">' +
-            '<span class="time">' + step.time + '</span>' +
-            '<span class="label">' + step.label + '</span>' +
-          '</li>';
-      }
-      html += "</ul></div>";
-
-      els.planOutput.innerHTML = html;
-
-      lastCopyText = buildCopyTextFromSteps(steps);
-      els.copyContainer.style.display = "block";
-    }
-
-    // Events
-    els.planButton.addEventListener("click", function () {
-      calculatePlan();
-    });
-
-    els.ratioSlider.addEventListener("input", function () {
-      if (els.reverseEnabled.checked) {
-        calculatePlan();
-      } else {
-        if (!lastPlan || lastPlan.saunaOnly) return;
-        renderPlan();
-      }
-    });
-
-    els.cardioEnabled.addEventListener("change", function () {
-      if (els.saunaOnly.checked) {
-        return;
-      }
-
-      if (els.cardioEnabled.checked) {
-        els.ratioRow.style.display = "block";
-        if (lastPlan && lastPlan.mode === "forward") {
-          const tb = lastPlan.trainingBudget || 60;
-          const half = Math.floor(tb / 2);
-          els.ratioSlider.value = half;
-        } else if (lastPlan && lastPlan.mode === "reverse") {
-          const tt = lastPlan.trainTotal || 0;
-          els.ratioSlider.min = 0;
-          els.ratioSlider.max = tt || 1;
-          els.ratioSlider.value = Math.floor(tt / 2);
-        } else {
-          els.ratioSlider.value = 30;
-        }
-      } else {
-        els.ratioRow.style.display = "none";
-      }
-      if (lastPlan) {
-        calculatePlan();
-      }
-    });
-
-    function recalcSaunaOnlySuggestion() {
-      if (!els.saunaEnabled.checked || !els.saunaOnly.checked) return;
-      if (els.reverseEnabled.checked) {
-        els.saunaValidation.textContent = "";
-        return;
-      }
-
-      const start = parseTimeToMinutes(els.startTime.value);
-      const end = parseTimeToMinutes(els.endTime.value);
-      if (start === null || end === null) return;
-
-      let total = end - start;
-      if (total <= 0) total += 24 * 60;
-
-      const s = currentSettings;
-      const fixBefore = s.driveTo + s.changeBefore;
-      const fixAfter = s.showerAfter + s.changeAfter + s.driveBack;
-
-      const saunaBudget = total - (fixBefore + fixAfter);
-      if (saunaBudget <= 0) {
-        els.saunaValidation.textContent = "Zeitfenster zu knapp für Sauna only.";
-        return;
-      }
-
-      const baseSauna = toInt(els.saunaDurationInline.value, s.saunaDuration);
-      const baseRelax = toInt(els.relaxDurationInline.value, s.relaxDuration);
-      const timePerGang = baseSauna + s.postSaunaShower + baseRelax;
-
-      const usable = saunaBudget - s.preSaunaShower;
-      if (usable <= 0 || timePerGang <= 0) {
-        els.saunaValidation.textContent = "Zeitfenster reicht nicht für einen Saunagang.";
-        return;
-      }
-
-      const maxGangsMath = Math.floor(usable / timePerGang);
-      if (maxGangsMath <= 0) {
-        els.saunaValidation.textContent = "Zeitfenster reicht nicht für einen Saunagang.";
-        return;
-      }
-
-      const maxGangs = Math.min(maxGangsMath, 5);
-      const suggested = maxGangs;
-      els.saunaCountInline.value = String(suggested);
-      updateSaunaSessionsUI();
-      els.saunaValidation.textContent =
-        "Sauna only: Mit deinen Einstellungen sind maximal " + maxGangsMath + " Saunagänge möglich (bis zu 5 einplanbar).";
-    }
-
-    els.saunaEnabled.addEventListener("change", function () {
-      clearSaunaValidation();
-
-      if (els.saunaEnabled.checked) {
-        els.saunaInlineRow.style.display = "flex";
-        els.saunaDurationInline.value = String(currentSettings.saunaDuration);
-        els.relaxDurationInline.value = String(currentSettings.relaxDuration);
-        els.saunaCountInline.value = "1";
-        els.saunaOnlyBlock.style.display = "flex";
-      } else {
-        els.saunaInlineRow.style.display = "none";
-        els.saunaSessionsContainer.style.display = "none";
-        els.saunaSessionsContainer.innerHTML = "";
-        els.saunaOnly.checked = false;
-        els.saunaOnlyBlock.style.display = "none";
-
-        els.cardioBlock.style.display = "flex";
-        if (els.cardioEnabled.checked) {
-          els.ratioRow.style.display = "block";
-        }
-      }
-      updateSaunaSessionsUI();
-      if (lastPlan) {
-        calculatePlan();
-      }
-    });
-
-    els.saunaOnly.addEventListener("change", function () {
-      clearSaunaValidation();
-
-      if (els.saunaOnly.checked) {
-        els.cardioEnabled.checked = false;
-        els.cardioBlock.style.display = "none";
-        els.ratioRow.style.display = "none";
-        showMainMessage("Sauna only Modus aktiv.", "info");
-        recalcSaunaOnlySuggestion();
-      } else {
-        els.cardioBlock.style.display = "flex";
-        if (els.cardioEnabled.checked) {
-          els.ratioRow.style.display = "block";
-        } else {
-          els.ratioRow.style.display = "none";
-        }
-        showMainMessage("", "");
-      }
-      if (lastPlan) {
-        calculatePlan();
-      }
-    });
-
-    [els.saunaDurationInline, els.relaxDurationInline, els.saunaCountInline].forEach(function (input) {
-      input.addEventListener("input", function () {
-        updateSaunaSessionsUI();
-        if (lastPlan) {
-          calculatePlan();
-        }
-        if (els.saunaOnly.checked) {
-          recalcSaunaOnlySuggestion();
-        }
-      });
-    });
-
-    els.settingsToggle.addEventListener("click", function () {
-      const open = els.settingsBody.style.display === "block";
-      els.settingsBody.style.display = open ? "none" : "block";
-      els.settingsToggleIcon.textContent = open ? "+" : "–";
-      const span = els.settingsToggle.querySelector("span");
-      if (span) {
-        span.textContent = open ? "Einstellungen öffnen" : "Einstellungen schließen";
-      }
-    });
-
-    els.saveSettings.addEventListener("click", function () {
-      saveSettings();
-      showToast("Einstellungen gespeichert.", function () {
-        els.settingsBody.style.display = "none";
-        els.settingsToggleIcon.textContent = "+";
-        const span = els.settingsToggle.querySelector("span");
-        if (span) span.textContent = "Einstellungen öffnen";
-
-        calculatePlan();
-        const planSection = document.getElementById("planSection");
-        if (planSection) {
-          planSection.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      });
-    });
-
-    els.resetDefaults.addEventListener("click", function () {
-      resetDefaults();
-      if (lastPlan) {
-        lastPlan = null;
-        els.planOutput.innerHTML =
-          '<div class="message info">Standardwerte geladen. Bitte Plan erneut berechnen.</div>';
-        els.copyContainer.style.display = "none";
-        lastCopyText = "";
-      }
-    });
-
-    // Reverse-Modus Toggle
-    els.reverseEnabled.addEventListener("change", function () {
-      const active = els.reverseEnabled.checked;
-      const trainRow = document.getElementById("trainTotalRow");
-      if (active) {
-        trainRow.style.display = "block";
-
-        let initialTrain = 90;
-        if (lastPlan && lastPlan.mode === "forward" && !lastPlan.saunaOnly) {
-          initialTrain = lastPlan.trainingBudget || 90;
-        } else if (lastPlan && lastPlan.mode === "reverse") {
-          initialTrain = lastPlan.trainTotal || 90;
-        }
-        // auf 5er-Schritt einrasten
-        initialTrain = Math.min(300, Math.max(5, Math.round(initialTrain / 5) * 5));
-        els.trainTotal.value = String(initialTrain);
-
-        els.ratioSlider.min = 0;
-        els.ratioSlider.max = initialTrain || 1;
-        els.ratioSlider.step = 1;
-        els.ratioSlider.value = Math.floor(initialTrain / 2);
-
-        calculatePlan();
-      } else {
-        trainRow.style.display = "none";
-        calculatePlan();
-      }
-    });
-
-    els.startTime.addEventListener("change", function () {
-      if (els.reverseEnabled.checked) {
-        reverseAnchor = "start";
-        calculatePlan();
-      }
-    });
-
-    els.endTime.addEventListener("change", function () {
-      if (els.reverseEnabled.checked) {
-        reverseAnchor = "end";
-        calculatePlan();
-      }
-    });
-
-    els.trainTotal.addEventListener("input", function () {
-      if (els.reverseEnabled.checked) {
-        calculatePlan();
-      }
-    });
-
-    els.copyButton.addEventListener("click", async function () {
-      els.copyMessage.textContent = "";
-      if (!lastCopyText) {
-        els.copyMessage.textContent = "Kein Zeitplan zum Kopieren.";
-        els.copyMessage.className = "message error";
-        return;
-      }
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(lastCopyText);
-        } else {
-          const textarea = document.createElement("textarea");
-          textarea.value = lastCopyText;
-          textarea.style.position = "fixed";
-          textarea.style.opacity = "0";
-          document.body.appendChild(textarea);
-          textarea.select();
-          document.execCommand("copy");
-          document.body.removeChild(textarea);
-        }
-        els.copyMessage.textContent = "Zeitplan in die Zwischenablage kopiert.";
-        els.copyMessage.className = "message info";
-      } catch (e) {
-        console.warn("Konnte nicht kopieren:", e);
-        els.copyMessage.textContent = "Kopieren nicht möglich.";
-        els.copyMessage.className = "message error";
-      }
-    });
-
-    // Init
-    initMinuteSelects();
-    loadSettings();
-    setDefaultTimes();
-    els.ratioInfo.textContent = "erst nach der ersten Berechnung sinnvoll nutzbar";
-    els.saunaInlineRow.style.display = els.saunaEnabled.checked ? "flex" : "none";
-    els.saunaOnlyBlock.style.display = els.saunaEnabled.checked ? "flex" : "none";
-    els.ratioRow.style.display = els.cardioEnabled.checked ? "block" : "none";
-    updateSaunaSessionsUI();
-
-    // Start: 75/30 Gefühl
-    els.ratioSlider.value = 80;
-    calculatePlan();
-  </script>
 </body>
 </html>
