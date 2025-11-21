@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   
-  <title>Gym-Planner 1940</title>
+  <title>Gym-Planner 1950</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/app-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -689,7 +689,7 @@
 <body>
   <div class="app">
     <header>
-      <h1>Gym-Planner 1940</h1>
+      <h1>Gym-Planner 1950</h1>
     </header>
 
     <!-- Haupt-Eingaben -->
@@ -922,7 +922,7 @@ const defaultSettings = {
 
 const SETTINGS_KEY = "gymPlannerSettings_v1";
 const STATE_KEY = "gymPlannerState_v1";
-
+const RATIO_MAX = 180;   // z.B. 180 Minuten oder was du willst
 let ratioLoadedFromState = false;
 
 // --- State speichern ---
@@ -1443,7 +1443,7 @@ ratioLoadedFromState = false;
       }
 
       const sliderMax = Math.max(1, trainingBudget);
-      els.ratioSlider.max = sliderMax;
+      
       els.ratioSlider.step = 1;
       // Slider NICHT automatisch verändern, wenn aus State geladen
 let sliderValue = parseInt(els.ratioSlider.value, 10);
@@ -2131,7 +2131,7 @@ cardioMinutes = segmentsBudget - strengthMinutes;
         } else if (lastPlan && lastPlan.mode === "reverse") {
           const tt = lastPlan.trainTotal || 0;
           els.ratioSlider.min = 0;
-          els.ratioSlider.max = tt || 1;
+          
           
         } else {
           
@@ -2397,6 +2397,13 @@ loadState();
   els.trainTotal,
   els.ratioSlider
 ].forEach(el => {
+  if (!el) return;
+  el.addEventListener("input", saveState);
+  el.addEventListener("change", saveState);
+});
+
+// Fixes Slider-Max einmalig setzen
+els.ratioSlider.max = RATIO_MAX;
   if (!el) return;
   el.addEventListener("input", saveState);
   el.addEventListener("change", saveState);
