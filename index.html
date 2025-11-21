@@ -966,7 +966,7 @@ function loadState() {
     els.saunaOnly.checked = state.saunaOnly;
 
   if (state.trainTotal) els.trainTotal.value = state.trainTotal;
-  if (state.slider) els.ratioSlider.value = state.slider;
+  if (state.slider !== undefined) els.ratioSlider.value = state.slider;
 
   // Inline-Sauna laden
   if (state.saunaDurationInline) els.saunaDurationInline.value = state.saunaDurationInline;
@@ -2100,14 +2100,14 @@ cardioMinutes = segmentsBudget - strengthMinutes;
         if (lastPlan && lastPlan.mode === "forward") {
           const tb = lastPlan.trainingBudget || 60;
           const half = Math.floor(tb / 2);
-          els.ratioSlider.value = half;
+          
         } else if (lastPlan && lastPlan.mode === "reverse") {
           const tt = lastPlan.trainTotal || 0;
           els.ratioSlider.min = 0;
           els.ratioSlider.max = tt || 1;
-          els.ratioSlider.value = Math.floor(tt / 2);
+          
         } else {
-          els.ratioSlider.value = 30;
+          
         }
       } else {
         els.ratioRow.style.display = "none";
