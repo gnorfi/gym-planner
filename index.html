@@ -1827,10 +1827,19 @@
             }
 
             const ratio = strengthRaw / trainingBudget;
-            strengthMinutes = Math.round(segmentsBudget * ratio);
-            if (strengthMinutes < 0) strengthMinutes = 0;
-            if (strengthMinutes > segmentsBudget) strengthMinutes = segmentsBudget;
-            cardioMinutes = segmentsBudget - strengthMinutes;
+
+// Vor-Rohwert
+let rawStrength = segmentsBudget * ratio;
+
+// Auf 5 Minuten runden
+strengthMinutes = Math.round(rawStrength / 5) * 5;
+
+// Überläufe abfangen
+if (strengthMinutes < 0) strengthMinutes = 0;
+if (strengthMinutes > segmentsBudget) strengthMinutes = segmentsBudget;
+
+// Cardio neu berechnen
+cardioMinutes = segmentsBudget - strengthMinutes;
 
             trainingTimeSegments = segmentsBudget;
             els.ratioSlider.disabled = false;
