@@ -2303,7 +2303,15 @@ els.ratioRow.style.display = "block";
 calculatePlan(); 
 setTimeout(() => {
   if (els.ratioSlider.max > 0) {
-    els.ratioSlider.value = Math.floor(els.ratioSlider.max * 0.75);
+    // 75%-Wert berechnen
+    let raw = els.ratioSlider.max * 0.75;
+
+    // Auf 5 Minuten runden
+    let rounded = Math.round(raw / 5) * 5;
+
+    // Slider setzen (aber nicht über Max)
+    els.ratioSlider.value = Math.min(rounded, els.ratioSlider.max);
+
     calculatePlan();
   }
 }, 50);
