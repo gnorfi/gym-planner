@@ -2343,6 +2343,46 @@ cardioMinutes = segmentsBudget - strengthMinutes;
     loadSettings();
     loadState();
 
+// --- State speichern bei Änderungen ---
+[
+  els.startTime,
+  els.endTime,
+  els.reverseEnabled,
+  els.cardioEnabled,
+  els.saunaEnabled,
+  els.saunaOnly,
+  els.trainTotal,
+  els.ratioSlider
+].forEach(el => {
+  if (!el) return;
+  el.addEventListener("input", saveState);
+  el.addEventListener("change", saveState);
+});
+
+      [
+  els.saunaDurationInline,
+  els.relaxDurationInline,
+  els.saunaCountInline
+].forEach(el => {
+  if (!el) return;
+  el.addEventListener("input", saveState);
+});
+      
+function saveState() {
+  const state = {
+    startTime: els.startTime.value,
+    endTime: els.endTime.value,
+    reverseEnabled: els.reverseEnabled.checked,
+    cardioEnabled: els.cardioEnabled.checked,
+    saunaEnabled: els.saunaEnabled.checked,
+    saunaOnly: els.saunaOnly.checked,
+    trainTotal: els.trainTotal.value,
+    slider: els.ratioSlider.value
+  };
+
+  localStorage.setItem(STATE_KEY, JSON.stringify(state));
+}
+      
     els.saunaInlineRow.style.display = els.saunaEnabled.checked ? "flex" : "none";
     els.saunaOnlyBlock.style.display = els.saunaEnabled.checked ? "flex" : "none";
     els.ratioRow.style.display = els.cardioEnabled.checked ? "block" : "none";
