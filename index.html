@@ -2391,6 +2391,7 @@ loadState();
     els.ratioRow.style.display = els.cardioEnabled.checked ? "block" : "none";
     updateSaunaSessionsUI();
     if (els.startTime.value && els.endTime.value) calculatePlan();
+      if (state.slider !== undefined) els.ratioSlider.value = state.slider;
   </script>
 </body>
 </html>
