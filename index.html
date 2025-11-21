@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   
-  <title>Gym-Planner 1930</title>
+  <title>Gym-Planner 1940</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/app-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -689,7 +689,7 @@
 <body>
   <div class="app">
     <header>
-      <h1>Gym-Planner 1930</h1>
+      <h1>Gym-Planner 1940</h1>
     </header>
 
     <!-- Haupt-Eingaben -->
@@ -1282,9 +1282,9 @@ function formatMinutesToTime(mins) {
       els.copyContainer.style.display = "none";
 
       // Wenn Slider aus dem State geladen wurde: NICHT neu berechnen
-if (ratioLoadedFromState) {
-  ratioLoadedFromState = false; 
-}
+// Slider nicht automatisch verändern, wenn aus dem State geladen
+const skipSlider = ratioLoadedFromState;
+ratioLoadedFromState = false;
       
       els.copyMessage.textContent = "";
       lastCopyText = "";
@@ -1448,7 +1448,7 @@ if (ratioLoadedFromState) {
       // Slider NICHT automatisch verändern, wenn aus State geladen
 let sliderValue = parseInt(els.ratioSlider.value, 10);
 
-if (!ratioLoadedFromState) {
+if (!skipSlider) {
   if (!Number.isFinite(sliderValue) || sliderValue < 0 || sliderValue > sliderMax) {
     sliderValue = Math.floor(sliderMax / 2);
     els.ratioSlider.value = sliderValue;
