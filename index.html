@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   
-  <title>Gym-Planner 1915</title>
+  <title>Gym-Planner 1918</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/app-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -689,7 +689,7 @@
 <body>
   <div class="app">
     <header>
-      <h1>Gym-Planner 1915</h1>
+      <h1>Gym-Planner 1918</h1>
     </header>
 
     <!-- Haupt-Eingaben -->
@@ -1288,6 +1288,12 @@ if (state.slider !== undefined) {
       clearSaunaValidation();
       els.planOutput.innerHTML = "";
       els.copyContainer.style.display = "none";
+
+      // Wenn Slider aus dem State geladen wurde: NICHT neu berechnen
+if (ratioLoadedFromState) {
+  ratioLoadedFromState = false; 
+}
+      
       els.copyMessage.textContent = "";
       lastCopyText = "";
 
