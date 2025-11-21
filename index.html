@@ -202,6 +202,20 @@
       justify-content: center;
     }
 
+    /* Cardio + Sauna Buttons enger zusammen */
+.small-toggle-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;              /* Abstand zwischen Cardio und Sauna */
+  margin-top: 10px;
+}
+
+.small-toggle-row .toggle-block {
+  margin: 0;             /* Standard-Margin der inneren Toggle-Blöcke entfernen */
+  padding: 0;
+}
+    
     .checkbox {
       display: flex;
       align-items: center;
@@ -678,9 +692,16 @@
         <div class="card-title">Zeitfenster</div>
       </div>
 
-      <!-- Neue Button-Anordnung direkt unter Abfahrt/Zuhause -->
+      <!-- Reverse-Modus -->
+<div class="toggle-block" id="reverseBlock">
+  <label style="display:flex;justify-content:center;">
+    <input type="checkbox" id="reverseEnabled">
+    <span class="toggle-button">Reverse-Modus</span>
+  </label>
+</div>
 
-<div class="flex-row">
+<!-- Abfahrt + Zuhause -->
+<div class="flex-row" style="margin-top:14px;">
   <div class="flex-1">
     <label for="startTime" class="center-label">Abfahrt</label>
     <input type="time" id="startTime" class="time-input" required>
@@ -691,40 +712,25 @@
   </div>
 </div>
 
-<!-- Neuer Bereich: Buttons -->
-
-<div style="margin-top:14px;">
-
-  <!-- Reverse-Modus -->
-  <div class="toggle-block" id="reverseBlock" style="margin-bottom:12px;">
+<!-- Cardio + Sauna nebeneinander -->
+<div class="small-toggle-row" style="margin-top:14px;">
+  <div class="toggle-block" id="cardioBlock">
     <label style="display:flex;justify-content:center;">
-      <input type="checkbox" id="reverseEnabled">
-      <span class="toggle-button">Reverse-Modus</span>
+      <input type="checkbox" id="cardioEnabled">
+      <span class="toggle-button">Cardio</span>
     </label>
   </div>
 
-  <!-- Cardio + Sauna nebeneinander -->
-  <div style="display:flex; gap:10px;">
-
-    <div class="toggle-block" id="cardioBlock" style="flex:1;">
-      <label style="display:flex;justify-content:center;">
-        <input type="checkbox" id="cardioEnabled">
-        <span class="toggle-button">Cardio</span>
-      </label>
-    </div>
-
-    <div class="toggle-block" id="saunaBlock" style="flex:1;">
-      <label style="display:flex;justify-content:center;">
-        <input type="checkbox" id="saunaEnabled">
-        <span class="toggle-button">Sauna</span>
-      </label>
-    </div>
-
+  <div class="toggle-block" id="saunaBlock">
+    <label style="display:flex;justify-content:center;">
+      <input type="checkbox" id="saunaEnabled">
+      <span class="toggle-button">Sauna</span>
+    </label>
   </div>
 </div>
 
 <!-- Verhältnis-Slider -->
-<div class="ratio-row" id="ratioRow" style="margin-top:14px;">
+<div class="ratio-row" id="ratioRow">
   <div class="ratio-label">
     <span>Verhältnis Kraft / Cardio</span>
     <span id="ratioInfo">erst nach der ersten Berechnung sinnvoll nutzbar</span>
