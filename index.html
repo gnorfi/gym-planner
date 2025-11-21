@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   
-  <title>Gym-Planner 1815</title>
+  <title>Gym-Planner 1823</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/app-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -689,7 +689,7 @@
 <body>
   <div class="app">
     <header>
-      <h1>Gym-Planner 1815</h1>
+      <h1>Gym-Planner 1824</h1>
     </header>
 
     <!-- Haupt-Eingaben -->
@@ -2390,8 +2390,15 @@ loadState();
     els.saunaOnlyBlock.style.display = els.saunaEnabled.checked ? "flex" : "none";
     els.ratioRow.style.display = els.cardioEnabled.checked ? "block" : "none";
     updateSaunaSessionsUI();
-    if (els.startTime.value && els.endTime.value) calculatePlan();
-      if (state.slider !== undefined) els.ratioSlider.value = state.slider;
+    // Gespeicherten Slider zuerst setzen – aber nur wenn vorhanden
+if (state.slider !== undefined) {
+    els.ratioSlider.value = state.slider;
+}
+
+// Jetzt erst neu berechnen
+if (els.startTime.value && els.endTime.value) {
+    calculatePlan();
+}
   </script>
 </body>
 </html>
