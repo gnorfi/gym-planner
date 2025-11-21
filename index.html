@@ -2306,8 +2306,7 @@ cardioMinutes = segmentsBudget - strengthMinutes;
     // Init
     initMinuteSelects();
     loadSettings();
-    setDefaultTimes();
-    els.ratioInfo.textContent = "erst nach der ersten Berechnung sinnvoll nutzbar";
+
     els.saunaInlineRow.style.display = els.saunaEnabled.checked ? "flex" : "none";
     els.saunaOnlyBlock.style.display = els.saunaEnabled.checked ? "flex" : "none";
     els.ratioRow.style.display = els.cardioEnabled.checked ? "block" : "none";
@@ -2316,21 +2315,7 @@ cardioMinutes = segmentsBudget - strengthMinutes;
 els.cardioEnabled.checked = true;
 els.ratioRow.style.display = "block";
 
-      // Startwert 75% Kraft / 25% Cardio korrekt setzen
-setTimeout(() => {
-  if (els.ratioSlider.max > 0) {
-    // 75%-Wert berechnen
-    let raw = els.ratioSlider.max * 0.75;
-
-    // Auf 5 Minuten runden
-    let rounded = Math.round(raw / 5) * 5;
-
-    // Slider setzen (aber nicht über Max)
-    els.ratioSlider.value = Math.min(rounded, els.ratioSlider.max);
-
-    calculatePlan();
-  }
-}, 50);
+     
       
   </script>
 </body>
