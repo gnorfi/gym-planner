@@ -922,6 +922,41 @@
 
     const SETTINGS_KEY = "gymPlannerSettings_v1";
 
+      const STATE_KEY = "gymPlannerState_v1";
+      // --- State speichern & laden ---
+function saveState() {
+  const state = {
+    startTime: els.startTime.value,
+    endTime: els.endTime.value,
+    reverse: els.reverseEnabled.checked,
+    cardio: els.cardioEnabled.checked,
+    sauna: els.saunaEnabled.checked,
+    saunaOnly: els.saunaOnly.checked,
+    trainTotal: els.trainTotal.value,
+    ratio: els.ratioSlider.value
+  };
+  localStorage.setItem(STATE_KEY, JSON.stringify(state));
+}
+
+function loadState() {
+  const saved = localStorage.getItem(STATE_KEY);
+  if (!saved) return;
+
+  const state = JSON.parse(saved);
+
+  if (state.startTime) els.startTime.value = state.startTime;
+  if (state.endTime) els.endTime.value = state.endTime;
+  if (typeof state.reverse === "boolean")
+    els.reverseEnabled.checked = state.reverse;
+  if (typeof state.cardio === "boolean")
+    els.cardioEnabled.checked = state.cardio;
+  if (typeof state.sauna === "boolean")
+    els.saunaEnabled.checked = state.sauna;
+  if (typeof state.saunaOnly === "boolean")
+    els.saunaOnly.checked = state.saunaOnly;
+  if (state.trainTotal) els.trainTotal.value = state.trainTotal;
+  if (state.ratio) els.ratioSlider.value = state.ratio;
+}
     const els = {
       startTime: document.getElementById("startTime"),
       endTime: document.getElementById("endTime"),
@@ -2306,16 +2341,12 @@ cardioMinutes = segmentsBudget - strengthMinutes;
     // Init
     initMinuteSelects();
     loadSettings();
+    loadState();
 
     els.saunaInlineRow.style.display = els.saunaEnabled.checked ? "flex" : "none";
     els.saunaOnlyBlock.style.display = els.saunaEnabled.checked ? "flex" : "none";
     els.ratioRow.style.display = els.cardioEnabled.checked ? "block" : "none";
     updateSaunaSessionsUI();
-
-els.cardioEnabled.checked = true;
-els.ratioRow.style.display = "block";
-
-     
       
   </script>
 </body>
