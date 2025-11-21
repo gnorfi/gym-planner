@@ -2298,9 +2298,17 @@
 
 els.cardioEnabled.checked = true;
 els.ratioRow.style.display = "block";
+
+      // Startwert 75% Kraft / 25% Cardio korrekt setzen
+calculatePlan(); 
+setTimeout(() => {
+  if (els.ratioSlider.max > 0) {
+    els.ratioSlider.value = Math.floor(els.ratioSlider.max * 0.75);
+    calculatePlan();
+  }
+}, 50);
       
-    // Start: 75/30 Gefühl
-els.ratioSlider.value = Math.floor(els.ratioSlider.max * 0.75);    calculatePlan();
+    els.ratioSlider.value = Math.floor(els.ratioSlider.max * 0.75);    calculatePlan();
   </script>
 </body>
 </html>
