@@ -678,54 +678,64 @@
         <div class="card-title">Zeitfenster</div>
       </div>
 
-      <!-- Reverse-Modus -->
-<div class="toggle-block" id="reverseBlock">
-  <label style="display:flex;justify-content:center;">
-    <input type="checkbox" id="reverseEnabled">
-    <span class="toggle-button">Reverse-Modus</span>
-  </label>
+      <!-- Neue Button-Anordnung direkt unter Abfahrt/Zuhause -->
+
+<div class="flex-row">
+  <div class="flex-1">
+    <label for="startTime" class="center-label">Abfahrt</label>
+    <input type="time" id="startTime" class="time-input" required>
+  </div>
+  <div class="flex-1">
+    <label for="endTime" class="center-label">Zuhause</label>
+    <input type="time" id="endTime" class="time-input" required>
+  </div>
 </div>
 
-      <div class="flex-row">
-        <div class="flex-1">
-          <label for="startTime" class="center-label">Abfahrt</label>
-          <input type="time" id="startTime" class="time-input" required>
-        </div>
-        <div class="flex-1">
-          <label for="endTime" class="center-label">Zuhause</label>
-          <input type="time" id="endTime" class="time-input" required>
-        </div>
-      </div>
+<!-- Neuer Bereich: Buttons -->
 
-      <!-- Cardio-Block -->
-      <div class="toggle-block" id="cardioBlock">
-<label style="display:flex;justify-content:center;">
-  <input type="checkbox" id="cardioEnabled">
-  <span class="toggle-button">Cardio einplanen</span>
-</label>
-      </div>
+<div style="margin-top:14px;">
 
-      <!-- Verhältnis-Slider -->
-      <div class="ratio-row" id="ratioRow">
-        <div class="ratio-label">
-          <span>Verhältnis Kraft / Cardio</span>
-          <span id="ratioInfo">erst nach der ersten Berechnung sinnvoll nutzbar</span>
-        </div>
-        <input type="range" id="ratioSlider" min="0" max="60" step="1" value="30">
-      </div>
+  <!-- Reverse-Modus -->
+  <div class="toggle-block" id="reverseBlock" style="margin-bottom:12px;">
+    <label style="display:flex;justify-content:center;">
+      <input type="checkbox" id="reverseEnabled">
+      <span class="toggle-button">Reverse-Modus</span>
+    </label>
+  </div>
 
-      <!-- Trainingszeit gesamt (nur Reverse-Modus relevant) -->
-      <div id="trainTotalRow" style="display:none; margin-top:8px;">
-        <label for="trainTotal" class="center-label">Trainingszeit gesamt (min)</label>
-        <select id="trainTotal" class="inline-input"></select>
-      </div>
+  <!-- Cardio + Sauna nebeneinander -->
+  <div style="display:flex; gap:10px;">
 
-      <!-- Sauna-Block -->
-<div class="toggle-block" id="saunaBlock">
-  <label style="display:flex;justify-content:center;">
-    <input type="checkbox" id="saunaEnabled">
-    <span class="toggle-button">Sauna einplanen</span>
-  </label>
+    <div class="toggle-block" id="cardioBlock" style="flex:1;">
+      <label style="display:flex;justify-content:center;">
+        <input type="checkbox" id="cardioEnabled">
+        <span class="toggle-button">Cardio</span>
+      </label>
+    </div>
+
+    <div class="toggle-block" id="saunaBlock" style="flex:1;">
+      <label style="display:flex;justify-content:center;">
+        <input type="checkbox" id="saunaEnabled">
+        <span class="toggle-button">Sauna</span>
+      </label>
+    </div>
+
+  </div>
+</div>
+
+<!-- Verhältnis-Slider -->
+<div class="ratio-row" id="ratioRow" style="margin-top:14px;">
+  <div class="ratio-label">
+    <span>Verhältnis Kraft / Cardio</span>
+    <span id="ratioInfo">erst nach der ersten Berechnung sinnvoll nutzbar</span>
+  </div>
+  <input type="range" id="ratioSlider" min="0" max="60" step="1" value="30">
+</div>
+
+<!-- Trainingszeit gesamt (nur Reverse-Modus relevant) -->
+<div id="trainTotalRow" style="display:none; margin-top:8px;">
+  <label for="trainTotal" class="center-label">Trainingszeit gesamt (min)</label>
+  <select id="trainTotal" class="inline-input"></select>
 </div>
 
       <!-- Sauna Inline-Dauer + Anzahl -->
