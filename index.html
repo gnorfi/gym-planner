@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   
-  <title>Gym-Planner 1823</title>
+  <title>Gym-Planner 1835</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/app-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -689,7 +689,7 @@
 <body>
   <div class="app">
     <header>
-      <h1>Gym-Planner 1824</h1>
+      <h1>Gym-Planner 1835</h1>
     </header>
 
     <!-- Haupt-Eingaben -->
@@ -972,6 +972,19 @@ function loadState() {
   if (state.saunaDurationInline) els.saunaDurationInline.value = state.saunaDurationInline;
   if (state.relaxDurationInline) els.relaxDurationInline.value = state.relaxDurationInline;
   if (state.saunaCountInline) els.saunaCountInline.value = state.saunaCountInline;
+
+  // UI passend aktualisieren, wenn State geladen wurde
+  els.saunaInlineRow.style.display = els.saunaEnabled.checked ? "flex" : "none";
+  els.saunaOnlyBlock.style.display = els.saunaEnabled.checked ? "flex" : "none";
+  els.ratioRow.style.display = els.cardioEnabled.checked ? "block" : "none";
+
+  // Sauna-Sessions aktualisieren
+  updateSaunaSessionsUI();
+
+  // Plan automatisch berechnen
+  if (els.startTime.value && els.endTime.value) {
+    calculatePlan();
+  }
 }
     const els = {
       startTime: document.getElementById("startTime"),
@@ -2384,21 +2397,7 @@ loadState();
   el.addEventListener("input", saveState);
 });
       
-
-      
-    els.saunaInlineRow.style.display = els.saunaEnabled.checked ? "flex" : "none";
-    els.saunaOnlyBlock.style.display = els.saunaEnabled.checked ? "flex" : "none";
-    els.ratioRow.style.display = els.cardioEnabled.checked ? "block" : "none";
-    updateSaunaSessionsUI();
-    // Gespeicherten Slider zuerst setzen – aber nur wenn vorhanden
-if (state.slider !== undefined) {
-    els.ratioSlider.value = state.slider;
-}
-
-// Jetzt erst neu berechnen
-if (els.startTime.value && els.endTime.value) {
-    calculatePlan();
-}
+    
   </script>
 </body>
 </html>
