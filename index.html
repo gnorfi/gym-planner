@@ -2390,7 +2390,7 @@ loadState();
     els.saunaOnlyBlock.style.display = els.saunaEnabled.checked ? "flex" : "none";
     els.ratioRow.style.display = els.cardioEnabled.checked ? "block" : "none";
     updateSaunaSessionsUI();
-      
+    if (els.startTime.value && els.endTime.value) calculatePlan();
   </script>
 </body>
 </html>
