@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   
-  <title>Gym-Planner 1910</title>
+  <title>Gym-Planner 1915</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/app-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -689,7 +689,7 @@
 <body>
   <div class="app">
     <header>
-      <h1>Gym-Planner 1910</h1>
+      <h1>Gym-Planner 1915</h1>
     </header>
 
     <!-- Haupt-Eingaben -->
@@ -1448,17 +1448,17 @@ if (state.slider !== undefined) {
       els.ratioSlider.max = sliderMax;
       els.ratioSlider.step = 1;
       // Gespeicherten Slider laden (falls vorhanden)
-let sliderValue = state && state.slider !== undefined
-  ? parseInt(state.slider, 10)
+let sliderValue = ratioLoadedFromState
+  ? parseInt(els.ratioSlider.value, 10)
   : parseInt(els.ratioSlider.value, 10);
 
-// Slider-Grenzen anwenden
-if (!Number.isFinite(sliderValue) || sliderValue < 0 || sliderValue > sliderMax) {
-  sliderValue = Math.floor(sliderMax / 2);
+// Nur überschreiben, wenn NICHT aus dem State geladen
+if (!ratioLoadedFromState) {
+  if (!Number.isFinite(sliderValue) || sliderValue < 0 || sliderValue > sliderMax) {
+    sliderValue = Math.floor(sliderMax / 2);
+  }
+  els.ratioSlider.value = sliderValue;
 }
-
-// Slider setzen
-els.ratioSlider.value = sliderValue;
 
       lastPlan = {
         saunaOnly: false,
