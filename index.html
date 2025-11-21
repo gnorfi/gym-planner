@@ -928,13 +928,19 @@ function saveState() {
   const state = {
     startTime: els.startTime.value,
     endTime: els.endTime.value,
-    reverse: els.reverseEnabled.checked,
-    cardio: els.cardioEnabled.checked,
-    sauna: els.saunaEnabled.checked,
+    reverseEnabled: els.reverseEnabled.checked,
+    cardioEnabled: els.cardioEnabled.checked,
+    saunaEnabled: els.saunaEnabled.checked,
     saunaOnly: els.saunaOnly.checked,
     trainTotal: els.trainTotal.value,
-    ratio: els.ratioSlider.value
+    slider: els.ratioSlider.value,
+
+    // Inline-Sauna
+    saunaDurationInline: els.saunaDurationInline.value,
+    relaxDurationInline: els.relaxDurationInline.value,
+    saunaCountInline: els.saunaCountInline.value
   };
+
   localStorage.setItem(STATE_KEY, JSON.stringify(state));
 }
 
@@ -946,16 +952,26 @@ function loadState() {
 
   if (state.startTime) els.startTime.value = state.startTime;
   if (state.endTime) els.endTime.value = state.endTime;
-  if (typeof state.reverse === "boolean")
-    els.reverseEnabled.checked = state.reverse;
-  if (typeof state.cardio === "boolean")
-    els.cardioEnabled.checked = state.cardio;
-  if (typeof state.sauna === "boolean")
-    els.saunaEnabled.checked = state.sauna;
+
+  if (typeof state.reverseEnabled === "boolean")
+    els.reverseEnabled.checked = state.reverseEnabled;
+
+  if (typeof state.cardioEnabled === "boolean")
+    els.cardioEnabled.checked = state.cardioEnabled;
+
+  if (typeof state.saunaEnabled === "boolean")
+    els.saunaEnabled.checked = state.saunaEnabled;
+
   if (typeof state.saunaOnly === "boolean")
     els.saunaOnly.checked = state.saunaOnly;
+
   if (state.trainTotal) els.trainTotal.value = state.trainTotal;
-  if (state.ratio) els.ratioSlider.value = state.ratio;
+  if (state.slider) els.ratioSlider.value = state.slider;
+
+  // Inline-Sauna laden
+  if (state.saunaDurationInline) els.saunaDurationInline.value = state.saunaDurationInline;
+  if (state.relaxDurationInline) els.relaxDurationInline.value = state.relaxDurationInline;
+  if (state.saunaCountInline) els.saunaCountInline.value = state.saunaCountInline;
 }
     const els = {
       startTime: document.getElementById("startTime"),
@@ -2339,9 +2355,9 @@ cardioMinutes = segmentsBudget - strengthMinutes;
     });
 
     // Init
-    initMinuteSelects();
-    loadSettings();
-    loadState();
+initMinuteSelects();
+loadSettings();
+loadState();
 
 // --- State speichern bei Änderungen ---
 [
@@ -2359,7 +2375,7 @@ cardioMinutes = segmentsBudget - strengthMinutes;
   el.addEventListener("change", saveState);
 });
 
-      [
+[
   els.saunaDurationInline,
   els.relaxDurationInline,
   els.saunaCountInline
@@ -2368,20 +2384,7 @@ cardioMinutes = segmentsBudget - strengthMinutes;
   el.addEventListener("input", saveState);
 });
       
-function saveState() {
-  const state = {
-    startTime: els.startTime.value,
-    endTime: els.endTime.value,
-    reverseEnabled: els.reverseEnabled.checked,
-    cardioEnabled: els.cardioEnabled.checked,
-    saunaEnabled: els.saunaEnabled.checked,
-    saunaOnly: els.saunaOnly.checked,
-    trainTotal: els.trainTotal.value,
-    slider: els.ratioSlider.value
-  };
 
-  localStorage.setItem(STATE_KEY, JSON.stringify(state));
-}
       
     els.saunaInlineRow.style.display = els.saunaEnabled.checked ? "flex" : "none";
     els.saunaOnlyBlock.style.display = els.saunaEnabled.checked ? "flex" : "none";
