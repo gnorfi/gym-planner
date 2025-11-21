@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   
-  <title>Gym-Planner 1835</title>
+  <title>Gym-Planner 1850</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/app-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -689,7 +689,7 @@
 <body>
   <div class="app">
     <header>
-      <h1>Gym-Planner 1835</h1>
+      <h1>Gym-Planner 1850</h1>
     </header>
 
     <!-- Haupt-Eingaben -->
@@ -980,11 +980,19 @@ function loadState() {
 
   // Sauna-Sessions aktualisieren
   updateSaunaSessionsUI();
-
+if (state.slider !== undefined) {
+  els.ratioSlider.value = state.slider;
+}
   // Plan automatisch berechnen
   if (els.startTime.value && els.endTime.value) {
     calculatePlan();
   }
+
+  // Slider nach dem automatischen Re-Render wieder herstellen
+if (state.slider !== undefined) {
+  els.ratioSlider.value = state.slider;
+}
+  
 }
     const els = {
       startTime: document.getElementById("startTime"),
