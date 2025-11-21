@@ -2019,8 +2019,16 @@ cardioMinutes = segmentsBudget - strengthMinutes;
 
     // Events
     els.planButton.addEventListener("click", function () {
-      calculatePlan();
-    });
+  calculatePlan();
+
+  // Nach der Berechnung etwas warten, damit DOM aktualisiert ist
+  setTimeout(() => {
+    const planSection = document.getElementById("planSection");
+    if (planSection) {
+      planSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, 30);
+});
 
     els.ratioSlider.addEventListener("input", function () {
       if (els.reverseEnabled.checked) {
