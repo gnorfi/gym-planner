@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   
-  <title>Gym-Planner 1918</title>
+  <title>Gym-Planner 1930</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/app-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -689,7 +689,7 @@
 <body>
   <div class="app">
     <header>
-      <h1>Gym-Planner 1918</h1>
+      <h1>Gym-Planner 1930</h1>
     </header>
 
     <!-- Haupt-Eingaben -->
@@ -907,23 +907,25 @@
   </div>
 
     <script>
-    const defaultSettings = {
-      driveTo: 10,
-      driveBack: 10,
-      changeBefore: 5,
-      preSaunaShower: 5,
-      saunaDuration: 15,
-      postSaunaShower: 5,
-      relaxDuration: 15,
-      showerAfter: 10,
-      changeAfter: 10,
-      breakBetween: 5
-    };
+const defaultSettings = {
+  driveTo: 10,
+  driveBack: 10,
+  changeBefore: 5,
+  preSaunaShower: 5,
+  saunaDuration: 15,
+  postSaunaShower: 5,
+  relaxDuration: 15,
+  showerAfter: 10,
+  changeAfter: 10,
+  breakBetween: 5
+};
 
-    const SETTINGS_KEY = "gymPlannerSettings_v1";
+const SETTINGS_KEY = "gymPlannerSettings_v1";
+const STATE_KEY = "gymPlannerState_v1";
 
-      const STATE_KEY = "gymPlannerState_v1";
-      // --- State speichern & laden ---
+let ratioLoadedFromState = false;
+
+// --- State speichern ---
 function saveState() {
   const state = {
     startTime: els.startTime.value,
@@ -935,7 +937,6 @@ function saveState() {
     trainTotal: els.trainTotal.value,
     slider: els.ratioSlider.value,
 
-    // Inline-Sauna
     saunaDurationInline: els.saunaDurationInline.value,
     relaxDurationInline: els.relaxDurationInline.value,
     saunaCountInline: els.saunaCountInline.value
@@ -944,6 +945,7 @@ function saveState() {
   localStorage.setItem(STATE_KEY, JSON.stringify(state));
 }
 
+// --- State laden ---
 function loadState() {
   const saved = localStorage.getItem(STATE_KEY);
   if (!saved) return;
@@ -966,113 +968,103 @@ function loadState() {
     els.saunaOnly.checked = state.saunaOnly;
 
   if (state.trainTotal) els.trainTotal.value = state.trainTotal;
+
+  // WICHTIG: Slider aus dem gespeicherten State setzen
   if (state.slider !== undefined) {
-  els.ratioSlider.value = state.slider;
-  ratioLoadedFromState = true;
-}
+    els.ratioSlider.value = state.slider;
+    ratioLoadedFromState = true;
+  }
 
   // Inline-Sauna laden
   if (state.saunaDurationInline) els.saunaDurationInline.value = state.saunaDurationInline;
   if (state.relaxDurationInline) els.relaxDurationInline.value = state.relaxDurationInline;
   if (state.saunaCountInline) els.saunaCountInline.value = state.saunaCountInline;
 
-  // UI passend aktualisieren, wenn State geladen wurde
+  // UI aktualisieren
   els.saunaInlineRow.style.display = els.saunaEnabled.checked ? "flex" : "none";
   els.saunaOnlyBlock.style.display = els.saunaEnabled.checked ? "flex" : "none";
   els.ratioRow.style.display = els.cardioEnabled.checked ? "block" : "none";
 
-  // Sauna-Sessions aktualisieren
   updateSaunaSessionsUI();
-if (state.slider !== undefined) {
-  els.ratioSlider.value = state.slider;
-}
+
   // Plan automatisch berechnen
   if (els.startTime.value && els.endTime.value) {
     calculatePlan();
   }
-
-  // Slider nach dem automatischen Re-Render wieder herstellen
-if (state.slider !== undefined) {
-  els.ratioSlider.value = state.slider;
 }
-  
+
+// --- ELs definieren ---
+const els = {
+  startTime: document.getElementById("startTime"),
+  endTime: document.getElementById("endTime"),
+  reverseEnabled: document.getElementById("reverseEnabled"),
+  trainTotal: document.getElementById("trainTotal"),
+  cardioEnabled: document.getElementById("cardioEnabled"),
+  saunaEnabled: document.getElementById("saunaEnabled"),
+  saunaOnly: document.getElementById("saunaOnly"),
+  cardioBlock: document.getElementById("cardioBlock"),
+  saunaInlineRow: document.getElementById("saunaInlineRow"),
+  saunaOnlyBlock: document.getElementById("saunaOnlyBlock"),
+  saunaDurationInline: document.getElementById("saunaDurationInline"),
+  relaxDurationInline: document.getElementById("relaxDurationInline"),
+  saunaCountInline: document.getElementById("saunaCountInline"),
+  saunaSessionsContainer: document.getElementById("saunaSessionsContainer"),
+  saunaValidation: document.getElementById("saunaValidation"),
+  ratioRow: document.getElementById("ratioRow"),
+  ratioSlider: document.getElementById("ratioSlider"),
+  ratioInfo: document.getElementById("ratioInfo"),
+  planButton: document.getElementById("planButton"),
+  mainMessage: document.getElementById("mainMessage"),
+  planOutput: document.getElementById("planOutput"),
+  settingsToggle: document.getElementById("settingsToggle"),
+  settingsBody: document.getElementById("settingsBody"),
+  driveTo: document.getElementById("driveTo"),
+  driveBack: document.getElementById("driveBack"),
+  changeBefore: document.getElementById("changeBefore"),
+  preSaunaShower: document.getElementById("preSaunaShower"),
+  saunaDuration: document.getElementById("saunaDuration"),
+  postSaunaShower: document.getElementById("postSaunaShower"),
+  relaxDuration: document.getElementById("relaxDuration"),
+  showerAfter: document.getElementById("showerAfter"),
+  changeAfter: document.getElementById("changeAfter"),
+  breakBetween: document.getElementById("breakBetween"),
+  saveSettings: document.getElementById("saveSettings"),
+  resetDefaults: document.getElementById("resetDefaults"),
+  copyContainer: document.getElementById("copyContainer"),
+  copyButton: document.getElementById("copyButton"),
+  copyMessage: document.getElementById("copyMessage")
+};
+
+let currentSettings = { ...defaultSettings };
+let lastPlan = null;
+let lastCopyText = "";
+let reverseAnchor = "start";
+
+// --- Hilfsfunktionen (unverändert) ---
+function toInt(value, fallback) {
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
 }
-    const els = {
-      startTime: document.getElementById("startTime"),
-      endTime: document.getElementById("endTime"),
-      reverseEnabled: document.getElementById("reverseEnabled"),
-      trainTotal: document.getElementById("trainTotal"),
-      cardioEnabled: document.getElementById("cardioEnabled"),
-      saunaEnabled: document.getElementById("saunaEnabled"),
-      saunaOnly: document.getElementById("saunaOnly"),
-      cardioBlock: document.getElementById("cardioBlock"),
-      saunaInlineRow: document.getElementById("saunaInlineRow"),
-      saunaOnlyBlock: document.getElementById("saunaOnlyBlock"),
-      saunaDurationInline: document.getElementById("saunaDurationInline"),
-      relaxDurationInline: document.getElementById("relaxDurationInline"),
-      saunaCountInline: document.getElementById("saunaCountInline"),
-      saunaSessionsContainer: document.getElementById("saunaSessionsContainer"),
-      saunaValidation: document.getElementById("saunaValidation"),
-      ratioRow: document.getElementById("ratioRow"),
-      ratioSlider: document.getElementById("ratioSlider"),
-      ratioInfo: document.getElementById("ratioInfo"),
-      planButton: document.getElementById("planButton"),
-      mainMessage: document.getElementById("mainMessage"),
-      planOutput: document.getElementById("planOutput"),
-      settingsToggle: document.getElementById("settingsToggle"),
-      settingsBody: document.getElementById("settingsBody"),
-      driveTo: document.getElementById("driveTo"),
-      driveBack: document.getElementById("driveBack"),
-      changeBefore: document.getElementById("changeBefore"),
-      preSaunaShower: document.getElementById("preSaunaShower"),
-      saunaDuration: document.getElementById("saunaDuration"),
-      postSaunaShower: document.getElementById("postSaunaShower"),
-      relaxDuration: document.getElementById("relaxDuration"),
-      showerAfter: document.getElementById("showerAfter"),
-      changeAfter: document.getElementById("changeAfter"),
-      breakBetween: document.getElementById("breakBetween"),
-      saveSettings: document.getElementById("saveSettings"),
-      resetDefaults: document.getElementById("resetDefaults"),
-      copyContainer: document.getElementById("copyContainer"),
-      copyButton: document.getElementById("copyButton"),
-      copyMessage: document.getElementById("copyMessage")
-    };
 
-    const toastOverlay = document.getElementById("toastOverlay");
-    const toastMessage = document.getElementById("toastMessage");
-    let toastDismissCallback = null;
-    let toastTimeout = null;
+function parseTimeToMinutes(value) {
+  if (!value || !/^\d{2}:\d{2}$/.test(value)) return null;
+  const [hStr, mStr] = value.split(":");
+  const h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+  if (h < 0 || h > 23 || m < 0 || m > 59) return null;
+  return h * 60 + m;
+}
 
-    let currentSettings = { ...defaultSettings };
-    let lastPlan = null;
-    let lastCopyText = "";
-    let reverseAnchor = "start"; // "start" oder "end"
-      let ratioLoadedFromState = false;
+function formatMinutesToTime(mins) {
+  const day = 24 * 60;
+  mins = ((mins % day) + day) % day;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h.toString().padStart(2, "0") + ":" + m.toString().padStart(2, "0");
+}
 
-    function toInt(value, fallback) {
-      const n = parseInt(value, 10);
-      return Number.isFinite(n) && n >= 0 ? n : fallback;
-    }
-
-    function parseTimeToMinutes(value) {
-      if (!value || !/^\d{2}:\d{2}$/.test(value)) return null;
-      const [hStr, mStr] = value.split(":");
-      const h = parseInt(hStr, 10);
-      const m = parseInt(mStr, 10);
-      if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
-      if (h < 0 || h > 23 || m < 0 || m > 59) return null;
-      return h * 60 + m;
-    }
-
-    function formatMinutesToTime(mins) {
-      const day = 24 * 60;
-      mins = ((mins % day) + day) % day;
-      const h = Math.floor(mins / 60);
-      const m = mins % 60;
-      const hh = h.toString().padStart(2, "0");
-      const mm = m.toString().padStart(2, "0");
-      return hh + ":" + mm;
-    }
+// (Rest deiner Helper-Funktionen bleibt)
 
     // -------- Picker-Helfer mit Min/Max/Step --------
     function populateMinuteSelect(select, min, max, step) {
@@ -1453,17 +1445,14 @@ if (ratioLoadedFromState) {
       const sliderMax = Math.max(1, trainingBudget);
       els.ratioSlider.max = sliderMax;
       els.ratioSlider.step = 1;
-      // Gespeicherten Slider laden (falls vorhanden)
-let sliderValue = ratioLoadedFromState
-  ? parseInt(els.ratioSlider.value, 10)
-  : parseInt(els.ratioSlider.value, 10);
+      // Slider NICHT automatisch verändern, wenn aus State geladen
+let sliderValue = parseInt(els.ratioSlider.value, 10);
 
-// Nur überschreiben, wenn NICHT aus dem State geladen
 if (!ratioLoadedFromState) {
   if (!Number.isFinite(sliderValue) || sliderValue < 0 || sliderValue > sliderMax) {
     sliderValue = Math.floor(sliderMax / 2);
+    els.ratioSlider.value = sliderValue;
   }
-  els.ratioSlider.value = sliderValue;
 }
 
       lastPlan = {
