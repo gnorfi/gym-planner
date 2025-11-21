@@ -2195,7 +2195,8 @@ cardioMinutes = segmentsBudget - strengthMinutes;
     els.settingsToggle.classList.add("active");
 
     // Automatisch zur Box scrollen
-    els.settingsToggle.scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById("settingsSection")
+  .scrollIntoView({ behavior: "smooth", block: "start" });
   }
 });
 
