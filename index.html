@@ -627,6 +627,12 @@
   }
 }
 
+#trainTotalRow {
+  display: none;         /* wird per JS ein- und ausgeblendet */
+  margin-top: 14px;      /* etwas Luft nach oben */
+  text-align: center;    /* Label + Select schön zentriert */
+}
+    
 /* <<< AB HIER DEINE NEUEN KLASSEN >>> */
 .settings-flex-row {
   display: flex;
@@ -704,6 +710,12 @@
   </div>
 </div>
 
+<!-- Trainingszeit gesamt (nur Reverse-Modus relevant) -->
+<div id="trainTotalRow" style="display:none; margin-top:14px;">
+  <label for="trainTotal" class="center-label">Trainingszeit gesamt</label>
+  <select id="trainTotal" class="inline-input"></select>
+</div>
+      
 <!-- Reverse-Modus OBEN -->
 <div class="toggle-block" id="reverseBlock" style="margin-top:14px;">
   <label style="display:flex;justify-content:center;">
@@ -736,12 +748,6 @@
     <span id="ratioInfo">erst nach der ersten Berechnung sinnvoll nutzbar</span>
   </div>
   <input type="range" id="ratioSlider" min="0" max="60" step="1" value="30">
-</div>
-
-<!-- Trainingszeit gesamt (nur Reverse-Modus relevant) -->
-<div id="trainTotalRow" style="display:none; margin-top:8px;">
-  <label for="trainTotal" class="center-label">Trainingszeit gesamt (min)</label>
-  <select id="trainTotal" class="inline-input"></select>
 </div>
 
       <!-- Sauna Inline-Dauer + Anzahl -->
