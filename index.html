@@ -870,7 +870,7 @@
 
 <div class="settings-flex-row">
   <div class="settings-field">
-    <label for="preSaunaShower">Abduschen vor Sauna</label>
+    <label for="preSaunaShower">Zw. Training & Sauna</label>
     <select id="preSaunaShower"></select>
   </div>
 
@@ -911,12 +911,12 @@
       driveTo: 10,
       driveBack: 15,
       changeBefore: 5,
-      preSaunaShower: 5,
+      preSaunaShower: 10,
       saunaDuration: 15,
       postSaunaShower: 5,
       relaxDuration: 15,
       showerAfter: 10,
-      changeAfter: 10,
+      changeAfter: 15,
       breakBetween: 5
     };
 
@@ -1026,11 +1026,11 @@
       populateMinuteSelect(els.driveTo, 0, 60, 1);          // Fahrt ins Gym
       populateMinuteSelect(els.driveBack, 0, 60, 1);        // Heimfahrt
       populateMinuteSelect(els.changeBefore, 1, 10, 1);     // Umziehen vor Training
-      populateMinuteSelect(els.changeAfter, 1, 10, 1);      // Umziehen nach Training
+      populateMinuteSelect(els.changeAfter, 1, 15, 1);      // Umziehen nach Training
       populateMinuteSelect(els.breakBetween, 1, 10, 1);     // Pause zwischen Kraft & Cardio
       populateMinuteSelect(els.saunaDuration, 5, 25, 1);    // Dauer Sauna-Gang
       populateMinuteSelect(els.relaxDuration, 0, 25, 1);    // Relax
-      populateMinuteSelect(els.preSaunaShower, 0, 5, 1);    // Abduschen vor Sauna
+      populateMinuteSelect(els.preSaunaShower, 0, 15, 1);    // Abduschen vor Sauna
       populateMinuteSelect(els.postSaunaShower, 0, 5, 1);   // Abduschen nach Sauna
       populateMinuteSelect(els.showerAfter, 0, 10, 1);      // Duschen nach Training
 
@@ -1627,7 +1627,7 @@
       const count = s.saunaCount;
       const one = count === 1;
 
-      add("Abduschen vor Sauna", "sauna-pre");
+      add("Zw. Training & Sauna", "sauna-pre");
       t += s.preSaunaShower;
 
       for (let i = 1; i <= count; i++) {
@@ -1903,7 +1903,7 @@ cardioMinutes = segmentsBudget - strengthMinutes;
         const count = s.saunaCount;
         const one = count === 1;
 
-        add("Abduschen vor Sauna", "sauna-1");
+        add("Zw. Training & Sauna", "sauna-1");
         t += s.preSaunaShower;
 
         const saunaLabelStart1 = one ? "Beginn Saunagang" : "Beginn Saunagang 1";
